@@ -1,0 +1,35 @@
+services:
+  store-db:
+    container_name: store-db
+    image: mongo:9
+    volumes:
+      - ./store-data:/data/db
+    env_file:
+      - store-db.env
+    ports:
+      - 27017:27017
+    networks:
+      - store-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  store-app:
+    container_name: store-app
+    build:
+      context: ./store-app
+    env_file:
+      - store-app.env
+    networks:
+      - store-net
+    ports:
+      - 3000:3000
+    depends_on:
+      store-db:
+        condition: service_healthy
+
+networks:
+  store-net:
