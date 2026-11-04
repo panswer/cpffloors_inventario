@@ -201,11 +201,12 @@ export const SaleFormModal: React.FC<SaleFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm overflow-y-auto">
-      <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:p-8 my-8">
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 backdrop-blur-sm overflow-hidden">
+      <div className="flex flex-col w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
+        {/* Cabecera Fija */}
+        <div className="flex items-center justify-between px-5 py-4 sm:px-6 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-50">
               Nueva Venta / Pedido
             </h2>
             <p className="text-xs text-zinc-500">
@@ -213,249 +214,264 @@ export const SaleFormModal: React.FC<SaleFormModalProps> = ({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           >
             ✕
           </button>
         </div>
 
-        {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-          {/* Sección de Cliente y Entrega */}
-          <div className="space-y-4 rounded-xl border border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-800/20">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                1. Cliente y Entrega
-              </h3>
-              <button
-                type="button"
-                onClick={() => setClientMode(clientMode === "select" ? "create" : "select")}
-                className="text-xs font-semibold text-blue-600 hover:text-blue-500 underline"
-              >
-                {clientMode === "select" ? "+ Registrar Cliente Nuevo" : "← Seleccionar Cliente Existente"}
-              </button>
+        {/* Cuerpo con Scroll Interno Seguro */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
+              {error}
             </div>
+          )}
 
-            {/* Formulario de Cliente Existente */}
-            {clientMode === "select" ? (
-              <SelectField
-                id="sale-client"
-                label="Cliente Registrado"
-                required
-                value={selectedClientId}
-                onChange={(e) => handleClientChange(e.target.value)}
-                options={[
-                  { label: "Selecciona un cliente...", value: "" },
-                  ...clients
-                    .filter((c) => c.isActive)
-                    .map((c) => ({
-                      label: `${c.name} (${c.documentId})`,
-                      value: c._id,
-                    })),
-                ]}
-              />
-            ) : (
-              /* Formulario Rápido de Cliente Nuevo (datos mínimos) */
-              <div className="rounded-lg border border-blue-100 bg-blue-50/30 p-3.5 space-y-3 dark:border-blue-900/40 dark:bg-blue-950/20">
-                <div className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                  ⚡ Datos Mínimos del Nuevo Cliente (Se guardará al confirmar la venta)
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <FormField
-                    id="new-client-doc"
-                    label="Documento / Cédula / RIF"
-                    required
-                    value={newClientDoc}
-                    onChange={(e) => setNewClientDoc(e.target.value)}
-                    placeholder="ej. J-12345678"
-                  />
-                  <FormField
-                    id="new-client-phone"
-                    label="Teléfono (opcional)"
-                    value={newClientPhone}
-                    onChange={(e) => setNewClientPhone(e.target.value)}
-                    placeholder="ej. +1 (555) 000-0000"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <FormField
-                    id="new-client-name"
-                    label="Nombre / Razón Social"
-                    required
-                    value={newClientName}
-                    onChange={(e) => handleNewClientNameChange(e.target.value)}
-                    placeholder="ej. Restaurante El Gourmet C.A."
-                  />
-                  <FormField
-                    id="new-client-address"
-                    label="Dirección Principal (opcional)"
-                    value={newClientAddress}
-                    onChange={(e) => handleNewClientAddressChange(e.target.value)}
-                    placeholder="ej. Calle 10 con Av. 4"
-                  />
-                </div>
+          <form id="sale-form" onSubmit={handleSubmit} className="space-y-5">
+            {/* Sección 1: Cliente y Entrega */}
+            <div className="space-y-3.5 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3.5 sm:p-4 dark:border-zinc-800 dark:bg-zinc-800/30">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1">
+                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                  1. Cliente y Despacho
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setClientMode(clientMode === "select" ? "create" : "select")}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-500 underline text-left sm:text-right"
+                >
+                  {clientMode === "select"
+                    ? "+ Registrar Cliente Nuevo"
+                    : "← Seleccionar Cliente Existente"}
+                </button>
               </div>
-            )}
 
-            {/* Datos específicos de entrega */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <FormField
-                id="sale-recipient"
-                label="A quién se le entrega el pedido"
-                required
-                value={recipientName}
-                onChange={(e) => setRecipientName(e.target.value)}
-                placeholder="Persona o encargado de recibir"
-              />
-
-              <FormField
-                id="sale-address"
-                label="Dirección de Entrega"
-                required
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-                placeholder="Lugar exacto de despacho"
-              />
-            </div>
-          </div>
-
-          {/* Sección de Productos y Carrito */}
-          <div className="space-y-4 rounded-xl border border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-800/20">
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-              2. Productos de la Venta
-            </h3>
-
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-              <div className="flex-1 w-full">
+              {/* Formulario Cliente Existente */}
+              {clientMode === "select" ? (
                 <SelectField
-                  id="sale-product-select"
-                  label="Producto"
-                  value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
+                  id="sale-client"
+                  label="Cliente Registrado"
+                  required
+                  value={selectedClientId}
+                  onChange={(e) => handleClientChange(e.target.value)}
                   options={[
-                    { label: "Selecciona un producto...", value: "" },
-                    ...products
-                      .filter((p) => p.isActive && p.stock > 0)
-                      .map((p) => ({
-                        label: `${p.name} - $${p.price} (Stock: ${p.stock} ${p.unit})`,
-                        value: p._id,
+                    { label: "Selecciona un cliente...", value: "" },
+                    ...clients
+                      .filter((c) => c.isActive)
+                      .map((c) => ({
+                        label: `${c.name} (${c.documentId})`,
+                        value: c._id,
                       })),
                   ]}
                 />
-              </div>
+              ) : (
+                /* Formulario Cliente Nuevo */
+                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3.5 space-y-3 dark:border-blue-900/50 dark:bg-blue-950/20">
+                  <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                    ⚡ Datos Mínimos del Nuevo Cliente (Se guardará al registrar la venta)
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <FormField
+                      id="new-client-doc"
+                      label="Documento / Cédula / RIF"
+                      required
+                      value={newClientDoc}
+                      onChange={(e) => setNewClientDoc(e.target.value)}
+                      placeholder="ej. J-12345678"
+                    />
+                    <FormField
+                      id="new-client-phone"
+                      label="Teléfono (opcional)"
+                      value={newClientPhone}
+                      onChange={(e) => setNewClientPhone(e.target.value)}
+                      placeholder="ej. +1 (555) 000-0000"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <FormField
+                      id="new-client-name"
+                      label="Nombre / Razón Social"
+                      required
+                      value={newClientName}
+                      onChange={(e) => handleNewClientNameChange(e.target.value)}
+                      placeholder="ej. Restaurante El Gourmet C.A."
+                    />
+                    <FormField
+                      id="new-client-address"
+                      label="Dirección Principal (opcional)"
+                      value={newClientAddress}
+                      onChange={(e) => handleNewClientAddressChange(e.target.value)}
+                      placeholder="ej. Calle 10 con Av. 4"
+                    />
+                  </div>
+                </div>
+              )}
 
-              <div className="w-full sm:w-28">
+              {/* Datos de Entrega */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                 <FormField
-                  id="sale-qty"
-                  label="Cantidad"
-                  type="number"
-                  min="1"
-                  value={itemQuantity}
-                  onChange={(e) => setItemQuantity(e.target.value)}
+                  id="sale-recipient"
+                  label="A quién se le entrega el pedido"
+                  required
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  placeholder="Persona o encargado de recibir"
+                />
+
+                <FormField
+                  id="sale-address"
+                  label="Dirección de Entrega"
+                  required
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  placeholder="Lugar exacto de despacho"
                 />
               </div>
-
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleAddItem}
-                className="w-full sm:w-auto"
-              >
-                + Añadir
-              </Button>
             </div>
 
-            {/* Lista del carrito */}
-            {cart.length > 0 ? (
-              <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800">
-                <table className="min-w-full divide-y divide-zinc-200 text-left text-xs dark:divide-zinc-700">
-                  <thead className="bg-zinc-50 dark:bg-zinc-700/50 text-zinc-600 dark:text-zinc-400">
-                    <tr>
-                      <th className="px-3 py-2">Producto</th>
-                      <th className="px-3 py-2">Precio</th>
-                      <th className="px-3 py-2">Cantidad</th>
-                      <th className="px-3 py-2">Subtotal</th>
-                      <th className="px-3 py-2 text-right">Quitar</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    {cart.map((item, idx) => (
-                      <tr key={item.productId}>
-                        <td className="px-3 py-2 font-medium">{item.name}</td>
-                        <td className="px-3 py-2">${item.price.toFixed(2)}</td>
-                        <td className="px-3 py-2">
-                          {item.quantity} {item.unit}
-                        </td>
-                        <td className="px-3 py-2 font-bold">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(idx)}
-                            className="text-red-500 hover:text-red-700 font-bold"
-                          >
-                            ✕
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Sección 2: Productos y Carrito */}
+            <div className="space-y-3.5 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3.5 sm:p-4 dark:border-zinc-800 dark:bg-zinc-800/30">
+              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                2. Productos de la Venta
+              </h3>
+
+              <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-end">
+                <div className="flex-1 min-w-0">
+                  <SelectField
+                    id="sale-product-select"
+                    label="Producto"
+                    value={selectedProductId}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    options={[
+                      { label: "Selecciona un producto...", value: "" },
+                      ...products
+                        .filter((p) => p.isActive && p.stock > 0)
+                        .map((p) => ({
+                          label: `${p.name} - $${p.price} (Stock: ${p.stock} ${p.unit})`,
+                          value: p._id,
+                        })),
+                    ]}
+                  />
+                </div>
+
+                <div className="w-full sm:w-28">
+                  <FormField
+                    id="sale-qty"
+                    label="Cantidad"
+                    type="number"
+                    min="1"
+                    value={itemQuantity}
+                    onChange={(e) => setItemQuantity(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleAddItem}
+                  className="w-full sm:w-auto h-[42px]"
+                >
+                  + Añadir
+                </Button>
               </div>
-            ) : (
-              <p className="text-xs text-zinc-400 italic text-center py-2">
-                No hay productos añadidos al pedido todavía.
-              </p>
-            )}
-          </div>
 
-          {/* Sección de Pago y Totales */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-            <SelectField
-              id="sale-payment-method"
-              label="Método de Pago"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value as any)}
-              options={[
-                { label: "Efectivo", value: "efectivo" },
-                { label: "Tarjeta de Débito/Crédito", value: "tarjeta" },
-                { label: "Transferencia Bancaria", value: "transferencia" },
-                { label: "Crédito Comercial", value: "credito" },
-              ]}
-            />
-
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-right dark:border-zinc-800 dark:bg-zinc-800/40">
-              <span className="text-xs text-zinc-500 block">Total a Pagar</span>
-              <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
-                ${subtotal.toFixed(2)}
-              </span>
+              {/* Tabla Carrito */}
+              {cart.length > 0 ? (
+                <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800">
+                  <table className="min-w-full divide-y divide-zinc-200 text-left text-xs dark:divide-zinc-700">
+                    <thead className="bg-zinc-50 dark:bg-zinc-700/50 text-zinc-600 dark:text-zinc-400">
+                      <tr>
+                        <th className="px-3 py-2">Producto</th>
+                        <th className="px-3 py-2">Precio</th>
+                        <th className="px-3 py-2">Cant.</th>
+                        <th className="px-3 py-2">Subtotal</th>
+                        <th className="px-3 py-2 text-right">Quitar</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+                      {cart.map((item, idx) => (
+                        <tr key={item.productId}>
+                          <td className="px-3 py-2 font-medium max-w-[150px] truncate">
+                            {item.name}
+                          </td>
+                          <td className="px-3 py-2">${item.price.toFixed(2)}</td>
+                          <td className="px-3 py-2">
+                            {item.quantity} {item.unit}
+                          </td>
+                          <td className="px-3 py-2 font-bold">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItem(idx)}
+                              className="text-red-500 hover:text-red-700 font-bold p-1"
+                            >
+                              ✕
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-400 italic text-center py-2">
+                  No hay productos añadidos al pedido todavía.
+                </p>
+              )}
             </div>
-          </div>
 
-          <FormField
-            id="sale-notes"
-            label="Notas / Instrucciones de Entrega (opcional)"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="ej. Dejar en recepción, horario de 9am a 1pm"
-          />
+            {/* Sección 3: Pago y Notas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+              <SelectField
+                id="sale-payment-method"
+                label="Método de Pago"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value as any)}
+                options={[
+                  { label: "Efectivo", value: "efectivo" },
+                  { label: "Tarjeta de Débito/Crédito", value: "tarjeta" },
+                  { label: "Transferencia Bancaria", value: "transferencia" },
+                  { label: "Crédito Comercial", value: "credito" },
+                ]}
+              />
 
-          <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-            <Button variant="outline" type="button" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button variant="primary" type="submit" isLoading={isLoading} disabled={cart.length === 0}>
-              Registrar Pedido
-            </Button>
-          </div>
-        </form>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 sm:p-4 text-right dark:border-zinc-800 dark:bg-zinc-800/40">
+                <span className="text-xs text-zinc-500 block">Total a Pagar</span>
+                <span className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400">
+                  ${subtotal.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            <FormField
+              id="sale-notes"
+              label="Notas / Instrucciones de Entrega (opcional)"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="ej. Dejar en recepción, horario de 9am a 1pm"
+            />
+          </form>
+        </div>
+
+        {/* Pie de Página Fijo con Acciones */}
+        <div className="flex items-center justify-end gap-3 px-5 py-3.5 sm:px-6 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+          <Button variant="outline" type="button" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="sale-form"
+            isLoading={isLoading}
+            disabled={cart.length === 0}
+          >
+            Registrar Pedido
+          </Button>
+        </div>
       </div>
     </div>
   );

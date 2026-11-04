@@ -30,11 +30,18 @@ export async function GET(req: NextRequest) {
       filter.isActive = isActiveParam === "true";
     }
 
-    const clients = await Client.find(filter).sort({ createdAt: -1 });
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 50) : 50;
+
+    const [clients, totalCount] = await Promise.all([
+      Client.find(filter).sort({ createdAt: -1 }).limit(limit),
+      Client.countDocuments(filter),
+    ]);
 
     return NextResponse.json({
       clients,
-      count: clients.length,
+      count: totalCount,
+      limit,
     });
   } catch (error: any) {
     console.error("Error en GET /api/clients:", error);

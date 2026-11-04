@@ -88,7 +88,8 @@ export default function UsersPage() {
           </p>
         </div>
 
-        {currentUser?.role === "admin" && (
+        {/* Botón de creación disponible tanto para admin como para manager */}
+        {(currentUser?.role === "admin" || currentUser?.role === "manager") && (
           <Button variant="primary" onClick={handleOpenCreate}>
             + Nuevo Usuario
           </Button>
@@ -138,6 +139,7 @@ export default function UsersPage() {
         onEdit={handleOpenEdit}
         onDelete={handleDelete}
         currentUserId={currentUser?.id}
+        currentUserRole={currentUser?.role}
       />
 
       {/* Modal de Creación / Edición */}
@@ -147,6 +149,7 @@ export default function UsersPage() {
         onSubmit={handleModalSubmit}
         userToEdit={selectedUser}
         isLoading={isCreating || isUpdating}
+        currentUserRole={currentUser?.role}
       />
     </DashboardTemplate>
   );

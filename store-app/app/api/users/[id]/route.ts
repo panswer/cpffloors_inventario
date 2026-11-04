@@ -39,9 +39,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 }
 
 // PUT /api/users/[id] - Actualizar usuario
+// Reglas:
+// - admin: puede actualizar cualquier usuario y asignar cualquier rol
+// - manager: solamente puede actualizar usuarios con rol "user" (no puede editar a otros managers ni a admins)
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   try {
-    const auth = requireAuth(req, ["admin"]);
+    const auth = requireAuth(req, ["admin", "manager"]);
     if (!auth.authorized) return auth.response;
 
     const { id } = await params;
@@ -59,13 +62,36 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
 
-    if (name !== undefined) user.name = name.trim();
-    if (role !== undefined && ["admin", "manager", "user"].includes(role)) {
-      user.role = role;
+    // Validación de permisos según el rol del actor:
+    if (auth.user?.role === "manager") {
+      // El manager solo puede actualizar a usuarios cuyo rol actual sea "user"
+      if (user.role !== "user") {
+        return NextResponse.json(
+          { error: "Acceso denegado. Los gerentes solamente pueden actualizar usuarios con el rol 'user'." },
+          { status: 403 }
+        );
+      }
+
+      // El manager no puede cambiar el rol a nada que no sea "user"
+      if (role !== undefined && role !== "user") {
+        return NextResponse.json(
+          { error: "Acceso denegado. Los gerentes no pueden elevar o cambiar roles a 'manager' o 'admin'." },
+          { status: 403 }
+        );
+      }
+    } else if (auth.user?.role === "admin") {
+      // El admin puede asignar cualquier rol válido
+      if (role !== undefined && ["admin", "manager", "user"].includes(role)) {
+        user.role = role;
+      }
     }
+
+    // Estado activo/baja
     if (isActive !== undefined) {
       user.isActive = Boolean(isActive);
     }
+
+    if (name !== undefined) user.name = name.trim();
     if (password && password.trim().length >= 6) {
       user.passwordHash = hashPassword(password);
     }
@@ -88,10 +114,13 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-// DELETE /api/users/[id] - Dar de baja (Soft delete o reactivación opcional)
+// DELETE /api/users/[id] - Dar de baja (Soft delete)
+// Reglas:
+// - admin: puede dar de baja a cualquiera (excepto a sí mismo)
+// - manager: puede dar de baja solamente a usuarios con rol "user"
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
-    const auth = requireAuth(req, ["admin"]);
+    const auth = requireAuth(req, ["admin", "manager"]);
     if (!auth.authorized) return auth.response;
 
     const { id } = await params;
@@ -100,7 +129,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "ID de usuario inválido" }, { status: 400 });
     }
 
-    // Evitar que el administrador se dé de baja a sí mismo
+    // Evitar que el usuario se dé de baja a sí mismo
     if (auth.user?.userId === id) {
       return NextResponse.json(
         { error: "No puedes dar de baja tu propia cuenta" },
@@ -113,6 +142,14 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     if (!user) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+    }
+
+    // Si es manager, solo puede dar de baja a usuarios con rol "user"
+    if (auth.user?.role === "manager" && user.role !== "user") {
+      return NextResponse.json(
+        { error: "Acceso denegado. Los gerentes solamente pueden dar de baja a usuarios con rol 'user'." },
+        { status: 403 }
+      );
     }
 
     // Soft delete: cambiar estado a inactivo

@@ -1,4 +1,4 @@
-import { PRODUCT_CATEGORIES, ProductCategory } from "./productService";
+import { PRODUCT_CATEGORIES, ProductCategory } from "@/types/product";
 
 export interface ProductItem {
   _id: string;
@@ -120,5 +120,7 @@ export const productsApi = {
     return data;
   },
 };
+
+// Re-exportar para comodidad de imports en componentes
 export { PRODUCT_CATEGORIES };
 export type { ProductCategory };

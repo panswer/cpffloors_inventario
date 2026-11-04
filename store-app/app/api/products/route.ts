@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { Product, PRODUCT_CATEGORIES, ProductCategory } from "@/models/Product";
+import { Product } from "@/models/Product";
+import { PRODUCT_CATEGORIES, ProductCategory } from "@/types/product";
 import { requireAuth } from "@/lib/authMiddleware";
 import crypto from "crypto";
 
@@ -62,11 +63,18 @@ export async function GET(req: NextRequest) {
       filter.isActive = isActiveParam === "true";
     }
 
-    const products = await Product.find(filter).sort({ createdAt: -1 });
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 50) : 50;
+
+    const [products, totalCount] = await Promise.all([
+      Product.find(filter).sort({ createdAt: -1 }).limit(limit),
+      Product.countDocuments(filter),
+    ]);
 
     return NextResponse.json({
       products,
-      count: products.length,
+      count: totalCount,
+      limit,
     });
   } catch (error: any) {
     console.error("Error en GET /api/products:", error);

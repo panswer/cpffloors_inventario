@@ -5,7 +5,7 @@ services:
     volumes:
       - ./store-data:/data/db
     env_file:
-      - store-db.env
+      - ./store-db.env
     ports:
       - 27017:27017
     networks:
@@ -27,9 +27,69 @@ services:
       - store-net
     ports:
       - 3000:3000
+    volumes:
+      - ./store-app:/workdir/app
+      - /workdir/app/node_modules
+      - /workdir/app/.next
+      - ./logs:/workdir/app/logs
     depends_on:
       store-db:
         condition: service_healthy
 
+  # Elasticsearch: Almacenamiento e indexación de logs
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
+    env_file:
+      - ./elasticsearch.env
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - store-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cat/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 25s
+
+  # Filebeat: Agente recolector de los archivos .log
+  filebeat:
+    container_name: filebeat
+    image: docker.elastic.co/beats/filebeat:8.11.3
+    user: root
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./logs:/usr/share/filebeat/logs:ro
+    networks:
+      - store-net
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      store-app:
+        condition: service_started
+
+  # Grafana: Tableros de monitoreo y visualización de logs
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:10.2.3
+    env_file:
+      - ./grafana.env
+    ports:
+      - 3001:3000
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - store-net
+    depends_on:
+      - elasticsearch
+
 networks:
   store-net:
+
+volumes:
+  es-data:
+  grafana-data:

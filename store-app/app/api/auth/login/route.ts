@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import { signToken, verifyPassword, hashPassword } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
 
     const isValid = verifyPassword(password, user.passwordHash);
     if (!isValid) {
+      logger.warn(`Intento de login fallido para usuario: ${cleanUsername}`, { username: cleanUsername }, "auth");
       return NextResponse.json(
         { error: "Credenciales inválidas" },
         { status: 401 }
@@ -46,6 +48,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user.isActive) {
+      logger.warn(`Intento de login con usuario inactivo: ${cleanUsername}`, { username: cleanUsername }, "auth");
       return NextResponse.json(
         { error: "Este usuario ha sido dado de baja. Contacte al administrador." },
         { status: 403 }
@@ -57,6 +60,8 @@ export async function POST(req: NextRequest) {
       username: user.username,
       role: user.role,
     });
+
+    logger.info(`Inicio de sesión exitoso: ${user.username}`, { userId: user._id, role: user.role }, "auth");
 
     const response = NextResponse.json({
       message: "Inicio de sesión exitoso",

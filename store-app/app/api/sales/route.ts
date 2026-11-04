@@ -4,6 +4,7 @@ import { Sale } from "@/models/Sale";
 import { Product } from "@/models/Product";
 import { Client } from "@/models/Client";
 import { requireAuth } from "@/lib/authMiddleware";
+import { logger } from "@/lib/logger";
 import mongoose from "mongoose";
 
 // Generar número secuencial correlativo para la venta (ej: VNT-202611-0001)
@@ -73,10 +74,22 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const sales = await Sale.find(filter).sort({ createdAt: -1 });
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 50) : 50;
+
+    const [sales, totalCount] = await Promise.all([
+      Sale.find(filter)
+        .select("-items") // Excluye el detalle de productos en la lista general de ventas
+        .sort({ createdAt: -1 })
+        .limit(limit),
+      Sale.countDocuments(filter),
+    ]);
 
     return NextResponse.json({
       sales,
+      count: totalCount,
+      limit,
+    });
       count: sales.length,
     });
   } catch (error: any) {
@@ -241,6 +254,14 @@ export async function POST(req: NextRequest) {
       userId: new mongoose.Types.ObjectId(auth.user!.userId),
       notes: notes ? String(notes).trim() : "",
     });
+
+    logger.info(`Venta registrada exitosamente: ${saleNumber}`, {
+      saleNumber,
+      total,
+      recipientName: finalRecipient,
+      itemsCount: processedItems.length,
+      userId: auth.user!.userId,
+    }, "sales");
 
     return NextResponse.json(
       {

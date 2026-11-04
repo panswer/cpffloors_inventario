@@ -1,6 +1,7 @@
 import React from "react";
 import { UserItem } from "@/services/userService";
 import { Badge, Button } from "../atoms";
+import { Table, Column } from "../molecules";
 
 interface UsersTableProps {
   users: UserItem[];
@@ -8,6 +9,7 @@ interface UsersTableProps {
   onEdit: (user: UserItem) => void;
   onDelete: (user: UserItem) => void;
   currentUserId?: string;
+  currentUserRole?: string;
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({
@@ -16,7 +18,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   onEdit,
   onDelete,
   currentUserId,
+  currentUserRole = "user",
 }) => {
+  const isAdmin = currentUserRole === "admin";
+  const isManager = currentUserRole === "manager";
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "admin":
@@ -28,89 +34,84 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
-          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          <span>Cargando usuarios...</span>
+  const columns: Column<UserItem>[] = [
+    {
+      header: "Usuario / Nombre",
+      render: (u) => (
+        <div>
+          <div className="font-semibold text-zinc-900 dark:text-zinc-100">
+            {u.username}
+          </div>
+          {u.name && (
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+              {u.name}
+            </div>
+          )}
         </div>
-      </div>
-    );
-  }
+      ),
+    },
+    {
+      header: "Rol",
+      render: (u) => <Badge variant={getRoleBadgeVariant(u.role)}>{u.role}</Badge>,
+    },
+    {
+      header: "Estado",
+      render: (u) => (
+        <Badge variant={u.isActive ? "success" : "danger"}>
+          {u.isActive ? "Activo" : "Inactivo / Baja"}
+        </Badge>
+      ),
+    },
+    {
+      header: "Creado",
+      className: "text-xs text-zinc-500 dark:text-zinc-400",
+      render: (u) => new Date(u.createdAt).toLocaleDateString(),
+    },
+    {
+      header: "Acciones",
+      headerClassName: "text-right",
+      className: "text-right",
+      render: (u) => {
+        // Reglas de edición y baja:
+        // - admin: puede editar y dar de baja a cualquiera (excepto darse de baja a sí mismo)
+        // - manager: solamente puede editar y dar de baja a usuarios con rol "user"
+        const canManageThisUser =
+          isAdmin || (isManager && u.role === "user");
 
-  if (users.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 p-12 text-center dark:border-zinc-800">
-        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-          No se encontraron usuarios registrados o coincidentes.
-        </p>
-      </div>
-    );
-  }
+        return (
+          <div className="flex items-center justify-end gap-2">
+            {canManageThisUser && (
+              <Button
+                variant="outline"
+                className="!py-1 !px-2.5 text-xs"
+                onClick={() => onEdit(u)}
+              >
+                Editar
+              </Button>
+            )}
+            {canManageThisUser && u.isActive && u._id !== currentUserId && (
+              <button
+                onClick={() => onDelete(u)}
+                className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
+              >
+                Dar de Baja
+              </button>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <table className="min-w-full divide-y divide-zinc-200 text-left text-sm dark:divide-zinc-800">
-        <thead className="bg-zinc-50 font-medium text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400">
-          <tr>
-            <th className="px-6 py-3.5">Usuario / Nombre</th>
-            <th className="px-6 py-3.5">Rol</th>
-            <th className="px-6 py-3.5">Estado</th>
-            <th className="px-6 py-3.5">Creado</th>
-            <th className="px-6 py-3.5 text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          {users.map((u) => (
-            <tr key={u._id} className="transition hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
-              <td className="px-6 py-4">
-                <div className="font-semibold text-zinc-900 dark:text-zinc-100">
-                  {u.username}
-                </div>
-                {u.name && (
-                  <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {u.name}
-                  </div>
-                )}
-              </td>
-              <td className="px-6 py-4">
-                <Badge variant={getRoleBadgeVariant(u.role)}>{u.role}</Badge>
-              </td>
-              <td className="px-6 py-4">
-                <Badge variant={u.isActive ? "success" : "danger"}>
-                  {u.isActive ? "Activo" : "Inactivo / Baja"}
-                </Badge>
-              </td>
-              <td className="px-6 py-4 text-xs text-zinc-500 dark:text-zinc-400">
-                {new Date(u.createdAt).toLocaleDateString()}
-              </td>
-              <td className="px-6 py-4 text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    className="!py-1 !px-2.5 text-xs"
-                    onClick={() => onEdit(u)}
-                  >
-                    Editar
-                  </Button>
-                  {u.isActive && u._id !== currentUserId && (
-                    <button
-                      onClick={() => onDelete(u)}
-                      className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
-                    >
-                      Dar de Baja
-                    </button>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table
+      data={users}
+      columns={columns}
+      keyExtractor={(u) => u._id}
+      isLoading={isLoading}
+      loadingMessage="Cargando usuarios..."
+      emptyMessage="No se encontraron usuarios registrados o coincidentes."
+      pagination={true}
+    />
   );
 };

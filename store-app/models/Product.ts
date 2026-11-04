@@ -1,14 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
-
-export const PRODUCT_CATEGORIES = [
-  "Contenedores",
-  "Vasos",
-  "Cubiertos",
-  "Servilletas",
-  "Empaques",
-] as const;
-
-export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
+import { PRODUCT_CATEGORIES, ProductCategory } from "@/types/product";
 
 export interface IProduct extends Document {
   sku: string;
@@ -76,8 +67,8 @@ const ProductSchema = new Schema<IProduct>(
   },
   {
     timestamps: true,
-    versionKey: "__v", // Mongoose versionKey explícito
-    optimisticConcurrency: true, // Habilita control de concurrencia optimista mediante __v
+    versionKey: "__v",
+    optimisticConcurrency: true,
   }
 );
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { FormField, SelectField } from "../molecules";
 import { Button } from "../atoms";
-import { UserItem, CreateUserInput, UpdateUserInput } from "@/services/userService";
+import { UserItem, UpdateUserInput } from "@/services/userService";
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface UserFormModalProps {
   onSubmit: (data: any) => Promise<void>;
   userToEdit?: UserItem | null;
   isLoading?: boolean;
+  currentUserRole?: string;
 }
 
 export const UserFormModal: React.FC<UserFormModalProps> = ({
@@ -19,6 +20,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   onSubmit,
   userToEdit,
   isLoading = false,
+  currentUserRole = "user",
 }) => {
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
@@ -26,6 +28,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const [password, setPassword] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const isAdmin = currentUserRole === "admin";
+  const isManager = currentUserRole === "manager";
 
   useEffect(() => {
     if (userToEdit) {
@@ -37,6 +42,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     } else {
       setUsername("");
       setName("");
+      // Si es manager, por defecto es "user"; si es admin, inicia en "user"
       setRole("user");
       setPassword("");
       setIsActive(true);
@@ -50,6 +56,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     e.preventDefault();
     setError(null);
 
+    // Validación si un manager intenta editar a alguien que no sea "user"
+    if (isManager && userToEdit && userToEdit.role !== "user") {
+      setError("Solo tienes permisos para gestionar usuarios con rol 'user'.");
+      return;
+    }
+
     if (!userToEdit) {
       // Crear
       if (!username.trim() || !password) {
@@ -60,15 +72,26 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         setError("La contraseña debe tener mínimo 6 caracteres.");
         return;
       }
+
+      // Si es manager, su rol siempre es forzado a "user"
+      const roleToCreate = isAdmin ? role : "user";
+
       try {
-        await onSubmit({ username, name, role, password });
+        await onSubmit({ username, name, role: roleToCreate, password });
         onClose();
       } catch (err: any) {
         setError(err.message || "Error al crear usuario");
       }
     } else {
       // Editar
-      const payload: UpdateUserInput = { name, role, isActive };
+      const payload: UpdateUserInput = { name, isActive };
+      // Solo el admin puede modificar roles
+      if (isAdmin) {
+        payload.role = role;
+      } else {
+        payload.role = "user";
+      }
+
       if (password.trim()) {
         if (password.length < 6) {
           setError("La nueva contraseña debe tener mínimo 6 caracteres.");
@@ -125,17 +148,32 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             placeholder="ej. Juan Pérez"
           />
 
-          <SelectField
-            id="modal-role"
-            label="Rol de Usuario"
-            value={role}
-            onChange={(e) => setRole(e.target.value as any)}
-            options={[
-              { label: "Usuario Estándar", value: "user" },
-              { label: "Gerente / Supervisor", value: "manager" },
-              { label: "Administrador", value: "admin" },
-            ]}
-          />
+          {/* Opciones de rol según permisos */}
+          {isAdmin ? (
+            <SelectField
+              id="modal-role"
+              label="Rol de Usuario"
+              value={role}
+              onChange={(e) => setRole(e.target.value as any)}
+              options={[
+                { label: "Usuario Estándar", value: "user" },
+                { label: "Gerente / Supervisor", value: "manager" },
+                { label: "Administrador", value: "admin" },
+              ]}
+            />
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Rol Asignado
+              </label>
+              <div className="mt-1 block w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                Usuario Estándar (user)
+              </div>
+              <p className="mt-1 text-xs text-zinc-400">
+                Como gerente, los usuarios que crees o edites tienen rol &quot;user&quot;.
+              </p>
+            </div>
+          )}
 
           <FormField
             id="modal-password"

@@ -35,11 +35,22 @@ export async function GET(req: NextRequest) {
       filter.isActive = isActiveParam === "true";
     }
 
-    const users = await User.find(filter)
-      .select("-passwordHash")
-      .sort({ createdAt: -1 });
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 50) : 50;
 
-    return NextResponse.json({ users, count: users.length });
+    const [users, totalCount] = await Promise.all([
+      User.find(filter)
+        .select("-passwordHash")
+        .sort({ createdAt: -1 })
+        .limit(limit),
+      User.countDocuments(filter),
+    ]);
+
+    return NextResponse.json({
+      users,
+      count: totalCount,
+      limit,
+    });
   } catch (error: any) {
     console.error("Error en GET /api/users:", error);
     return NextResponse.json(
@@ -50,9 +61,12 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/users - Crear un nuevo usuario
+// Reglas:
+// - admin: puede crear usuarios con cualquier rol ("admin", "manager", "user")
+// - manager: solamente puede crear usuarios con el rol "user"
 export async function POST(req: NextRequest) {
   try {
-    const auth = requireAuth(req, ["admin"]);
+    const auth = requireAuth(req, ["admin", "manager"]);
     if (!auth.authorized) return auth.response;
 
     await connectDB();
@@ -84,11 +98,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Determinación y validación del rol según quién crea el usuario
+    let assignedRole: "admin" | "manager" | "user" = "user";
+
+    if (auth.user?.role === "admin") {
+      // El admin puede asignar cualquier rol válido
+      if (role && ["admin", "manager", "user"].includes(role)) {
+        assignedRole = role;
+      }
+    } else if (auth.user?.role === "manager") {
+      // El manager solo puede crear usuarios con rol "user"
+      if (role && role !== "user") {
+        return NextResponse.json(
+          { error: "Los gerentes solamente pueden crear usuarios con el rol 'user'." },
+          { status: 403 }
+        );
+      }
+      assignedRole = "user";
+    }
+
     const newUser = await User.create({
       username: cleanUsername,
       passwordHash: hashPassword(password),
       name: name?.trim() || "",
-      role: role && ["admin", "manager", "user"].includes(role) ? role : "user",
+      role: assignedRole,
       isActive: true,
     });
 
