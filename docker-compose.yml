@@ -22,7 +22,7 @@ services:
     build:
       context: ./store-app
     env_file:
-      - store-app.env
+      - ./store-app.env
     networks:
       - store-net
     ports:

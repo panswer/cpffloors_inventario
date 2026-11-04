@@ -1,64 +1,129 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/atoms";
+import { DashboardTemplate } from "@/components/templates";
+import { DashboardCard } from "@/components/molecules";
 
 export default function Home() {
   const { user, logout, isLoggingOut } = useAuth();
 
+  const navigationSections = [
+    {
+      title: "Usuarios",
+      description: "Gestionar accesos, roles y usuarios del sistema.",
+      href: "/users",
+      badge: "Administración",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.75}
+            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+      ),
+    },
+    {
+      title: "Productos",
+      description: "Catálogo de pisos, stock disponible, categorías y precios.",
+      href: "/products",
+      badge: "Inventario",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.75}
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+          />
+        </svg>
+      ),
+    },
+    {
+      title: "Clientes",
+      description: "Directorio de clientes, contactos y registro de compras.",
+      href: "/clients",
+      badge: "CRM",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.75}
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      ),
+    },
+    {
+      title: "Ventas",
+      description: "Registro de transacciones, cotizaciones y pedidos generados.",
+      href: "/sales",
+      badge: "Comercial",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.75}
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+    },
+  ];
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 p-6 dark:bg-zinc-950">
-      <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-        </div>
-
-        <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          ¡Bienvenido{user?.name ? `, ${user.name}` : ""}!
+    <DashboardTemplate user={user} onLogout={logout} isLoggingOut={isLoggingOut}>
+      {/* Header del Dashboard */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-3xl">
+          Panel Principal
         </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Sistema de Inventario - CPF Floors
+        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+          Selecciona una sección para gestionar el inventario y operaciones de CPF Floors.
         </p>
-
-        <div className="mt-6 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-left dark:border-zinc-800 dark:bg-zinc-800/40">
-          <div className="flex justify-between py-1 text-sm">
-            <span className="text-zinc-500 dark:text-zinc-400">Usuario:</span>
-            <span className="font-medium text-zinc-800 dark:text-zinc-200">
-              {user?.username || "Cargando..."}
-            </span>
-          </div>
-          <div className="flex justify-between py-1 text-sm">
-            <span className="text-zinc-500 dark:text-zinc-400">Rol:</span>
-            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-              {user?.role || "user"}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-8 flex justify-center">
-          <Button
-            variant="outline"
-            isLoading={isLoggingOut}
-            onClick={() => logout()}
-            className="w-full"
-          >
-            Cerrar Sesión
-          </Button>
-        </div>
       </div>
-    </div>
+
+      {/* Grid de Secciones */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {navigationSections.map((section) => (
+          <DashboardCard
+            key={section.title}
+            title={section.title}
+            description={section.description}
+            href={section.href}
+            badge={section.badge}
+            icon={section.icon}
+          />
+        ))}
+      </div>
+    </DashboardTemplate>
   );
 }
+

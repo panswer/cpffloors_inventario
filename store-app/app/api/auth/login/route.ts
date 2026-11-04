@@ -45,6 +45,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: "Este usuario ha sido dado de baja. Contacte al administrador." },
+        { status: 403 }
+      );
+    }
+
     const token = signToken({
       userId: user._id.toString(),
       username: user.username,
