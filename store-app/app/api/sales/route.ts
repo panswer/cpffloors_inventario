@@ -90,8 +90,6 @@ export async function GET(req: NextRequest) {
       count: totalCount,
       limit,
     });
-      count: sales.length,
-    });
   } catch (error: any) {
     console.error("Error en GET /api/sales:", error);
     return NextResponse.json(
