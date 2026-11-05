@@ -137,6 +137,34 @@ export const SaleFormModal: React.FC<SaleFormModalProps> = ({
     setCart(cart.filter((_, i) => i !== index));
   };
 
+  // Actualizar cantidad directamente desde la fila del carrito
+  const handleUpdateCartQuantity = (productId: string, newQtyRaw: number) => {
+    setError(null);
+    const itemIndex = cart.findIndex((i) => i.productId === productId);
+    if (itemIndex === -1) return;
+
+    const item = cart[itemIndex];
+    const qty = Math.floor(newQtyRaw);
+
+    if (qty <= 0) {
+      // Si la cantidad llega a 0 o menor, se remueve el producto del carrito
+      handleRemoveItem(itemIndex);
+      return;
+    }
+
+    if (qty > item.stock) {
+      setError(`Stock insuficiente para "${item.name}". Máximo disponible: ${item.stock} ${item.unit}`);
+      return;
+    }
+
+    const updated = [...cart];
+    updated[itemIndex] = {
+      ...item,
+      quantity: qty,
+    };
+    setCart(updated);
+  };
+
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -385,7 +413,7 @@ export const SaleFormModal: React.FC<SaleFormModalProps> = ({
                       <tr>
                         <th className="px-3 py-2">Producto</th>
                         <th className="px-3 py-2">Precio</th>
-                        <th className="px-3 py-2">Cant.</th>
+                        <th className="px-3 py-2 w-36">Cant.</th>
                         <th className="px-3 py-2">Subtotal</th>
                         <th className="px-3 py-2 text-right">Quitar</th>
                       </tr>
@@ -394,11 +422,53 @@ export const SaleFormModal: React.FC<SaleFormModalProps> = ({
                       {cart.map((item, idx) => (
                         <tr key={item.productId}>
                           <td className="px-3 py-2 font-medium max-w-[150px] truncate">
-                            {item.name}
+                            <div>{item.name}</div>
+                            <span className="text-[10px] text-zinc-400">SKU: {item.sku}</span>
                           </td>
                           <td className="px-3 py-2">${item.price.toFixed(2)}</td>
                           <td className="px-3 py-2">
-                            {item.quantity} {item.unit}
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateCartQuantity(item.productId, item.quantity - 1)
+                                }
+                                className="h-6 w-6 rounded border border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-bold hover:bg-zinc-200 dark:hover:bg-zinc-600 flex items-center justify-center transition-colors"
+                                title="Disminuir cantidad"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                min="1"
+                                max={item.stock}
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value, 10);
+                                  handleUpdateCartQuantity(
+                                    item.productId,
+                                    isNaN(val) ? 1 : val
+                                  );
+                                }}
+                                className="w-12 h-6 px-1 text-center font-medium rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateCartQuantity(item.productId, item.quantity + 1)
+                                }
+                                disabled={item.quantity >= item.stock}
+                                className="h-6 w-6 rounded border border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-bold hover:bg-zinc-200 dark:hover:bg-zinc-600 flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                title={
+                                  item.quantity >= item.stock
+                                    ? `Límite de stock alcanzado (${item.stock} ${item.unit})`
+                                    : "Aumentar cantidad"
+                                }
+                              >
+                                +
+                              </button>
+                              <span className="text-[10px] text-zinc-400 ml-0.5">{item.unit}</span>
+                            </div>
                           </td>
                           <td className="px-3 py-2 font-bold">
                             ${(item.price * item.quantity).toFixed(2)}
@@ -407,7 +477,8 @@ export const SaleFormModal: React.FC<SaleFormModalProps> = ({
                             <button
                               type="button"
                               onClick={() => handleRemoveItem(idx)}
-                              className="text-red-500 hover:text-red-700 font-bold p-1"
+                              className="text-red-500 hover:text-red-700 font-bold p-1 text-sm rounded hover:bg-red-50 dark:hover:bg-red-950/30"
+                              title="Eliminar producto"
                             >
                               ✕
                             </button>

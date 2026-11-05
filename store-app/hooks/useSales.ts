@@ -69,3 +69,14 @@ export function useSales(filters?: SaleFilters) {
     cancelError: cancelMutation.error ? (cancelMutation.error as Error).message : null,
   };
 }
+
+// Hook para consultar el detalle completo de una venta bajo demanda (incluyendo items)
+export function useSaleDetail(id: string | null) {
+  return useQuery({
+    queryKey: SALE_KEYS.detail(id || ""),
+    queryFn: () => salesApi.getSaleById(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60, // 1 minuto
+  });
+}
+

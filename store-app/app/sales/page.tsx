@@ -143,7 +143,8 @@ export default function SalesPage() {
 
       {/* Modal para Ver Detalle de la Venta */}
       <SaleDetailModal
-        sale={selectedSale}
+        saleId={selectedSale?._id || null}
+        initialSale={selectedSale}
         onClose={() => setSelectedSale(null)}
       />
     </DashboardTemplate>
