@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     // En desarrollo/primer uso: si la base de datos está vacía, creamos un admin inicial por defecto
     const totalUsers = await User.countDocuments();
-    if (totalUsers === 0 && cleanUsername === "admin" && ["dev", "development"].includes(process.env.NODE_ENV)) {
+    if (totalUsers === 0 && cleanUsername === "admin") {
       user = await User.create({
         username: "admin",
         passwordHash: hashPassword(password),

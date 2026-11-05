@@ -1,0 +1,28 @@
+### Variables Globales del Entorno
+@host = http://localhost:3000
+
+# ==============================================================================
+# Módulo de Autenticación (Auth)
+# ==============================================================================
+
+### 1. Iniciar Sesión (Login)
+# Guarda automáticamente la cookie HttpOnly con el JWT y retorna el perfil del usuario.
+# Si la base de datos está vacía, el usuario "admin" se registra automáticamente al primer intento.
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password123"
+}
+
+### 2. Obtener Usuario Actual (Perfil / Me)
+# Requiere la cookie de sesión del login previo.
+GET {{host}}/api/auth/me
+Content-Type: application/json
+
+### 3. Cerrar Sesión (Logout)
+# Limpia la cookie HttpOnly "token".
+POST {{host}}/api/auth/logout
+Content-Type: application/json

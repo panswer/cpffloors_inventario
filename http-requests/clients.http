@@ -1,0 +1,53 @@
+### Variables Globales
+@host = http://localhost:3000
+@token = 
+
+# ==============================================================================
+# Módulo de Clientes (Clients)
+# ==============================================================================
+
+### 1. Listar Clientes (Límite máximo: 50)
+GET {{host}}/api/clients?limit=50
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 2. Filtrar Clientes por Búsqueda (Documento, Nombre, Email, Teléfono)
+GET {{host}}/api/clients?search=gourmet&isActive=true
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 3. Registrar Nuevo Cliente
+POST {{host}}/api/clients
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "documentId": "J-98765432-1",
+  "name": "Restaurante El Rincón Gourmet C.A.",
+  "email": "contacto@rincongourmet.com",
+  "phone": "+58 412 1234567",
+  "address": "Av. Las Delicias, Centro Empresarial Torre B, Local 12",
+  "notes": "Cliente corporativo, entregas de lunes a viernes en horario matutino"
+}
+
+### 4. Obtener Cliente por ID
+@clientId = 65e5a1b2c3d4e5f6a7b8c9d2
+GET {{host}}/api/clients/{{clientId}}
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 5. Actualizar Cliente
+PUT {{host}}/api/clients/{{clientId}}
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "phone": "+58 412 7654321",
+  "address": "Av. Las Delicias, Edificio Torre B, Local 14 (Nueva Sede)",
+  "notes": "Actualización de dirección principal de despacho"
+}
+
+### 6. Dar de Baja Cliente (Soft Delete)
+DELETE {{host}}/api/clients/{{clientId}}
+Cookie: token={{token}}
+Content-Type: application/json

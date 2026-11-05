@@ -1,0 +1,87 @@
+### Variables Globales
+@host = http://localhost:3000
+@token = 
+
+# ==============================================================================
+# Módulo de Ventas y Despachos (Sales)
+# Reglas:
+# - Descuenta stock de productos automáticamente al registrar.
+# - Permite registrar cliente nuevo "al vuelo" mediante `newClient`.
+# - La anulación repone automáticamente el stock al inventario.
+# - El listado excluye los ítems detallados para optimizar la respuesta.
+# ==============================================================================
+
+### 1. Listar Ventas (Límite máximo: 50, sin detalle de ítems)
+GET {{host}}/api/sales?limit=50
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 2. Filtrar Ventas por Estado, Método de Pago o Búsqueda
+GET {{host}}/api/sales?status=completada&paymentMethod=efectivo&search=VNT
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 3. Registrar Venta con Cliente Existente
+# Reemplazar clientId y productId con IDs reales de tu base de datos
+@existingClientId = 65e5a1b2c3d4e5f6a7b8c9d2
+@productId1 = 65e5a1b2c3d4e5f6a7b8c9d1
+
+POST {{host}}/api/sales
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "clientId": "{{existingClientId}}",
+  "recipientName": "Roberto Gómez (Gerente de Compras)",
+  "deliveryAddress": "Av. Las Delicias, Local 12",
+  "paymentMethod": "transferencia",
+  "notes": "Despachar en camión refrigerado",
+  "items": [
+    {
+      "productId": "{{productId1}}",
+      "quantity": 5
+    }
+  ]
+}
+
+### 4. Registrar Venta creando Cliente Nuevo al vuelo (Datos Mínimos)
+# El cliente se crea y persiste en la base de datos solo si la venta se completa exitosamente
+POST {{host}}/api/sales
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "newClient": {
+    "documentId": "J-55566677-8",
+    "name": "Panadería y Pastelería La Espiga Dorada",
+    "phone": "+58 414 9998877",
+    "address": "Calle 72 con Av. 15, Esquina"
+  },
+  "recipientName": "Sr. Manuel Silva",
+  "deliveryAddress": "Calle 72 con Av. 15, Esquina (Recepción)",
+  "paymentMethod": "efectivo",
+  "notes": "Entregar factura fiscal original al despachar",
+  "items": [
+    {
+      "productId": "{{productId1}}",
+      "quantity": 2
+    }
+  ]
+}
+
+### 5. Obtener Detalle Completo de una Venta por ID (Incluye array de productos)
+@saleId = 65e5a1b2c3d4e5f6a7b8c9d3
+GET {{host}}/api/sales/{{saleId}}
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 6. Anular Venta (Devuelve y repone automáticamente el stock al inventario)
+# Requiere rol "admin" o "manager"
+PUT {{host}}/api/sales/{{saleId}}
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "action": "anular",
+  "notes": "Cliente canceló el pedido por cambio de horario de entrega"
+}

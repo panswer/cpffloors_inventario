@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const isDev = process.env.NODE_ENV === "dev" || process.env.NODE_ENV === "development";
+const isDev = process.env.NODE_ENV === "development";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["mongoose"],

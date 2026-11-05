@@ -1,0 +1,73 @@
+### Variables Globales
+@host = http://localhost:3000
+@token = 
+
+# ==============================================================================
+# Módulo de Productos (Products)
+# Categorías: Contenedores, Vasos, Cubiertos, Servilletas, Empaques
+# Control de Concurrencia Optimista mediante __v
+# ==============================================================================
+
+### 1. Listar Productos (Límite máximo: 50)
+GET {{host}}/api/products?limit=50
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 2. Filtrar Productos por Búsqueda y Categoría
+GET {{host}}/api/products?search=vaso&category=Vasos&isActive=true
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 3. Crear Producto (Con SKU manual)
+POST {{host}}/api/products
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "sku": "VAS-PLAS-12",
+  "name": "Vaso Plástico Transparente 12oz",
+  "description": "Paquete de vasos térmicos para bebidas frías",
+  "category": "Vasos",
+  "price": 4.50,
+  "stock": 250,
+  "unit": "paquete"
+}
+
+### 4. Crear Producto (Con SKU auto-generado por el backend)
+# Si se omite el campo sku, el backend genera uno único con prefijo de la categoría (ej: CON-XXXXXX)
+POST {{host}}/api/products
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "name": "Contenedor Térmico 8oz",
+  "description": "Contenedor de bisagra biodegradable para comida caliente",
+  "category": "Contenedores",
+  "price": 8.75,
+  "stock": 100,
+  "unit": "caja"
+}
+
+### 5. Obtener Producto por ID
+@productId = 65e5a1b2c3d4e5f6a7b8c9d1
+GET {{host}}/api/products/{{productId}}
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 6. Actualizar Producto (Con control de versiones __v)
+# Nota: Si el producto fue modificado previamente por otro usuario y __v no coincide, la API retorna 409 Conflict
+PUT {{host}}/api/products/{{productId}}
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "price": 5.00,
+  "stock": 300,
+  "description": "Precio actualizado de temporada",
+  "__v": 0
+}
+
+### 7. Dar de Baja Producto (Soft Delete)
+DELETE {{host}}/api/products/{{productId}}
+Cookie: token={{token}}
+Content-Type: application/json

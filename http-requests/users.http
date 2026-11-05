@@ -1,0 +1,69 @@
+### Variables Globales
+@host = http://localhost:3000
+# Puedes colocar un JWT manual aquí si pruebas sin cookies automáticas:
+@token = 
+
+# ==============================================================================
+# Módulo de Usuarios (Users)
+# Roles permitidos: admin, manager, user
+# Reglas:
+# - admin: puede crear/actualizar cualquier usuario y rol.
+# - manager: solamente puede crear/actualizar usuarios con rol "user".
+# ==============================================================================
+
+### 1. Listar Usuarios (Límite máximo: 50)
+GET {{host}}/api/users?limit=50
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 2. Filtrar Usuarios por Búsqueda y Rol
+GET {{host}}/api/users?search=admin&role=admin&isActive=true
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 3. Crear Nuevo Usuario (Rol "user")
+POST {{host}}/api/users
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "username": "vendedor1",
+  "name": "Carlos Rodríguez",
+  "password": "password123",
+  "role": "user"
+}
+
+### 4. Crear Nuevo Usuario (Rol "manager" - Solo permitido por Administrador)
+POST {{host}}/api/users
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "username": "gerente1",
+  "name": "Mariana López",
+  "password": "password123",
+  "role": "manager"
+}
+
+### 5. Obtener Usuario por ID
+# Reemplazar {{userId}} por el ID generado
+@userId = 65e5a1b2c3d4e5f6a7b8c9d0
+GET {{host}}/api/users/{{userId}}
+Cookie: token={{token}}
+Content-Type: application/json
+
+### 6. Actualizar Usuario
+# Nota: Si quien edita es "manager", solo puede actualizar usuarios con rol "user" y no puede cambiar el rol.
+PUT {{host}}/api/users/{{userId}}
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "name": "Carlos A. Rodríguez",
+  "role": "user"
+}
+
+### 7. Dar de Baja Usuario (Soft Delete)
+DELETE {{host}}/api/users/{{userId}}
+Cookie: token={{token}}
+Content-Type: application/json
