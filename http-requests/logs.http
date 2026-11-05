@@ -1,0 +1,32 @@
+### Variables Globales
+@host = http://localhost:3000
+
+# ==============================================================================
+# Módulo de Logs y Observabilidad del Cliente
+# Permite al frontend reportar excepciones, fallos de render y promesas rechazadas
+# para que se guarden en logs/app-YYYY-MM-DD.log y sean indexados por Filebeat/Elasticsearch.
+# ==============================================================================
+
+### 1. Registrar Error de Cliente (Frontend)
+POST {{host}}/api/logs/client
+Content-Type: application/json
+
+{
+  "message": "Uncaught TypeError: Cannot read properties of undefined (reading 'map')",
+  "source": "error-boundary",
+  "url": "http://localhost:3000/sales",
+  "componentStack": "in SalesTable (at page.tsx:126)\nin SalesPage (at page.tsx:64)",
+  "stack": "TypeError: Cannot read properties of undefined (reading 'map')\n    at SalesTable (webpack-internal:///(app-pages-browser)/./components/organisms/SalesTable.tsx:45:21)",
+  "metadata": {
+    "view": "sales",
+    "filter": "completada"
+  }
+}
+
+### 2. Error con Payload Inválido (Debe devolver 400 Bad Request)
+POST {{host}}/api/logs/client
+Content-Type: application/json
+
+{
+  "source": "custom"
+}
