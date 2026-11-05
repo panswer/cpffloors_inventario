@@ -55,6 +55,46 @@ export interface SaleFilters {
   endDate?: string;
 }
 
+export interface SaleReportFilter {
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  paymentMethod?: string;
+}
+
+export interface SaleReportSummary {
+  totalSales: number;
+  completedSales: number;
+  cancelledSales: number;
+  totalRevenue: number;
+  averageTicket: number;
+}
+
+export interface PaymentMethodMetric {
+  paymentMethod: string;
+  count: number;
+  total: number;
+}
+
+export interface TopProductMetric {
+  productId: string;
+  sku: string;
+  name: string;
+  unit: string;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
+export interface SaleReportResponse {
+  summary: SaleReportSummary;
+  byPaymentMethod: PaymentMethodMetric[];
+  topProducts: TopProductMetric[];
+  sales: (SaleRecord & {
+    clientId?: { _id: string; name: string; documentId: string; phone?: string };
+    userId?: { _id: string; name: string; username: string };
+  })[];
+}
+
 export const salesApi = {
   // Listar ventas
   async getSales(filters?: SaleFilters): Promise<{ sales: SaleRecord[]; count: number }> {
@@ -111,6 +151,25 @@ export const salesApi = {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Error al anular la venta");
+    return data;
+  },
+
+  // Obtener reporte analítico de ventas
+  async getSalesReport(filters?: SaleReportFilter): Promise<SaleReportResponse> {
+    const params = new URLSearchParams();
+    if (filters?.startDate) params.append("startDate", filters.startDate);
+    if (filters?.endDate) params.append("endDate", filters.endDate);
+    if (filters?.status) params.append("status", filters.status);
+    if (filters?.paymentMethod) params.append("paymentMethod", filters.paymentMethod);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const res = await fetch(`/api/sales/reports${query}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error al generar el reporte");
     return data;
   },
 };

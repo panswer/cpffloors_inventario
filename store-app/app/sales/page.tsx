@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { DashboardTemplate } from "@/components/templates";
-import { SalesTable, SaleFormModal, SaleDetailModal } from "@/components/organisms";
+import { SalesTable, SaleFormModal, SaleDetailModal, SalesReportModal } from "@/components/organisms";
 import { Button, Input } from "@/components/atoms";
 import { useAuth } from "@/hooks/useAuth";
 import { useSales } from "@/hooks/useSales";
@@ -21,6 +21,7 @@ export default function SalesPage() {
 
   // Modales
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleRecord | null>(null);
 
   // Hooks de datos
@@ -80,9 +81,14 @@ export default function SalesPage() {
           </p>
         </div>
 
-        <Button variant="primary" onClick={handleOpenCreate}>
-          + Nueva Venta / Pedido
-        </Button>
+        <div className="flex items-center gap-2.5">
+          <Button variant="secondary" onClick={() => setIsReportModalOpen(true)}>
+            📊 Reportes y Exportación
+          </Button>
+          <Button variant="primary" onClick={handleOpenCreate}>
+            + Nueva Venta / Pedido
+          </Button>
+        </div>
       </div>
 
       {/* Barra de Filtros */}
@@ -146,6 +152,12 @@ export default function SalesPage() {
         saleId={selectedSale?._id || null}
         initialSale={selectedSale}
         onClose={() => setSelectedSale(null)}
+      />
+
+      {/* Modal de Reportes y Métricas */}
+      <SalesReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
       />
     </DashboardTemplate>
   );

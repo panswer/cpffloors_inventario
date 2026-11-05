@@ -15,6 +15,8 @@ export const SALE_KEYS = {
   list: (filters?: SaleFilters) => [...SALE_KEYS.lists(), filters] as const,
   details: () => [...SALE_KEYS.all, "detail"] as const,
   detail: (id: string) => [...SALE_KEYS.details(), id] as const,
+  reports: () => [...SALE_KEYS.all, "reports"] as const,
+  report: (filters?: any) => [...SALE_KEYS.reports(), filters] as const,
 };
 
 export function useSales(filters?: SaleFilters) {
@@ -79,4 +81,14 @@ export function useSaleDetail(id: string | null) {
     staleTime: 1000 * 60, // 1 minuto
   });
 }
+
+// Hook para consultar el reporte analítico y métricas de ventas
+export function useSalesReport(filters?: any) {
+  return useQuery({
+    queryKey: SALE_KEYS.report(filters),
+    queryFn: () => salesApi.getSalesReport(filters),
+    staleTime: 1000 * 30, // 30 segundos
+  });
+}
+
 

@@ -85,3 +85,10 @@ Content-Type: application/json
   "action": "anular",
   "notes": "Cliente canceló el pedido por cambio de horario de entrega"
 }
+
+### 7. Reporte Analítico y Métricas de Ventas
+# Retorna KPIs (ingresos, ticket promedio, completadas/anuladas), top 10 productos y desglose por pago
+GET {{host}}/api/sales/reports?startDate=2026-10-01&endDate=2026-11-05&status=completada
+Cookie: token={{token}}
+Content-Type: application/json
+
