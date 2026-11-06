@@ -11,3 +11,4 @@ export * from "./SalesTable";
 export * from "./SaleFormModal";
 export * from "./SaleDetailModal";
 export * from "./SalesReportModal";
+export * from "./CancelSaleModal";

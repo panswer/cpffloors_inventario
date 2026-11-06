@@ -75,20 +75,29 @@ export async function GET(req: NextRequest) {
     }
 
     const limitParam = searchParams.get("limit");
-    const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 50) : 50;
+    const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 10, 1), 50) : 10;
+
+    const pageParam = searchParams.get("page");
+    const page = Math.max(parseInt(pageParam || "1", 10) || 1, 1);
+    const skip = (page - 1) * limit;
 
     const [sales, totalCount] = await Promise.all([
       Sale.find(filter)
         .select("-items") // Excluye el detalle de productos en la lista general de ventas
         .sort({ createdAt: -1 })
+        .skip(skip)
         .limit(limit),
       Sale.countDocuments(filter),
     ]);
 
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+
     return NextResponse.json({
       sales,
       count: totalCount,
+      page,
       limit,
+      totalPages,
     });
   } catch (error: any) {
     console.error("Error en GET /api/sales:", error);

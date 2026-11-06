@@ -56,6 +56,9 @@ export function useSales(filters?: SaleFilters) {
   return {
     sales: salesQuery.data?.sales || [],
     count: salesQuery.data?.count || 0,
+    page: salesQuery.data?.page || 1,
+    limit: salesQuery.data?.limit || 10,
+    totalPages: salesQuery.data?.totalPages || 1,
     isLoading: salesQuery.isLoading,
     isError: salesQuery.isError,
     error: salesQuery.error ? (salesQuery.error as Error).message : null,

@@ -1,7 +1,7 @@
 import React from "react";
 import { SaleRecord } from "@/services/saleService";
 import { Badge, Button } from "../atoms";
-import { Table, Column } from "../molecules";
+import { Table, Column, PaginationConfig } from "../molecules";
 
 interface SalesTableProps {
   sales: SaleRecord[];
@@ -9,6 +9,7 @@ interface SalesTableProps {
   onViewDetails: (sale: SaleRecord) => void;
   onCancelSale: (sale: SaleRecord) => void;
   canCancel: boolean;
+  pagination?: boolean | PaginationConfig;
 }
 
 export const SalesTable: React.FC<SalesTableProps> = ({
@@ -17,6 +18,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
   onViewDetails,
   onCancelSale,
   canCancel,
+  pagination = true,
 }) => {
   const columns: Column<SaleRecord>[] = [
     {
@@ -103,7 +105,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
       isLoading={isLoading}
       loadingMessage="Cargando ventas..."
       emptyMessage="No se encontraron ventas registradas o que coincidan con la búsqueda."
-      pagination={true}
+      pagination={pagination}
     />
   );
 };

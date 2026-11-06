@@ -1,6 +1,6 @@
 ### Variables Globales
 @host = http://localhost:3000
-@token = 
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWVhNjY4NTQzMzEzYjYzYzFiYmZkYjgiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzkzOTY3NjM0LCJleHAiOjE3OTQ1NzI0MzR9.DSkWiAHISB7KXOLAGvbftajdug74mAlfUFU0EnAxYU8
 
 # ==============================================================================
 # Módulo de Ventas y Despachos (Sales)
@@ -11,13 +11,13 @@
 # - El listado excluye los ítems detallados para optimizar la respuesta.
 # ==============================================================================
 
-### 1. Listar Ventas (Límite máximo: 50, sin detalle de ítems)
-GET {{host}}/api/sales?limit=50
+### 1. Listar Ventas Paginadas (Límite por página y número de página)
+GET {{host}}/api/sales?page=1&limit=10
 Cookie: token={{token}}
 Content-Type: application/json
 
-### 2. Filtrar Ventas por Estado, Método de Pago o Búsqueda
-GET {{host}}/api/sales?status=completada&paymentMethod=efectivo&search=VNT
+### 2. Filtrar Ventas por Estado, Método de Pago, Búsqueda y Paginación
+GET {{host}}/api/sales?page=1&limit=10&status=completada&paymentMethod=efectivo&search=VNT
 Cookie: token={{token}}
 Content-Type: application/json
 

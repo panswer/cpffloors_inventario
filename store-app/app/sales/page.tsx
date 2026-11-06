@@ -3,7 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { DashboardTemplate } from "@/components/templates";
-import { SalesTable, SaleFormModal, SaleDetailModal, SalesReportModal } from "@/components/organisms";
+import {
+  SalesTable,
+  SaleFormModal,
+  SaleDetailModal,
+  SalesReportModal,
+  CancelSaleModal,
+} from "@/components/organisms";
 import { Button, Input } from "@/components/atoms";
 import { useAuth } from "@/hooks/useAuth";
 import { useSales } from "@/hooks/useSales";
@@ -18,17 +24,30 @@ export default function SalesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modales
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleRecord | null>(null);
+  const [saleToCancel, setSaleToCancel] = useState<SaleRecord | null>(null);
 
-  // Hooks de datos
-  const { sales, count, isLoading, createSale, isCreating, cancelSale } = useSales({
+  // Hooks de datos con paginación en el servidor
+  const {
+    sales,
+    count,
+    isLoading,
+    createSale,
+    isCreating,
+    cancelSale,
+    isCancelling,
+  } = useSales({
     search: searchTerm,
     status: statusFilter,
     paymentMethod: paymentFilter,
+    page: currentPage,
+    limit: pageSize,
   });
 
   const { clients } = useClients({ isActive: true });
@@ -44,17 +63,12 @@ export default function SalesPage() {
     setSelectedSale(sale);
   };
 
-  const handleCancelSale = async (sale: SaleRecord) => {
-    const reason = window.prompt(
-      `¿Deseas anular la venta "${sale.saleNumber}"? El stock de los productos será devuelto al inventario. Indica el motivo (opcional):`
-    );
-    if (reason !== null) {
-      try {
-        await cancelSale({ id: sale._id, notes: reason });
-      } catch (err: any) {
-        alert(err.message || "Error al anular la venta");
-      }
-    }
+  const handleOpenCancelModal = (sale: SaleRecord) => {
+    setSaleToCancel(sale);
+  };
+
+  const handleConfirmCancelSale = async (saleId: string, reason: string) => {
+    await cancelSale({ id: saleId, notes: reason });
   };
 
   const handleCreateSaleSubmit = async (data: CreateSaleInput) => {
@@ -97,7 +111,10 @@ export default function SalesPage() {
           <Input
             placeholder="Buscar por N° venta, entrega o dirección..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
 
@@ -105,7 +122,10 @@ export default function SalesPage() {
           <select
             className="block w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
           >
             <option value="">Todos los estados</option>
             <option value="completada">Completadas</option>
@@ -117,7 +137,10 @@ export default function SalesPage() {
           <select
             className="block w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
+            onChange={(e) => {
+              setPaymentFilter(e.target.value);
+              setCurrentPage(1);
+            }}
           >
             <option value="">Métodos de pago</option>
             <option value="efectivo">Efectivo</option>
@@ -128,13 +151,24 @@ export default function SalesPage() {
         </div>
       </div>
 
-      {/* Tabla de Ventas */}
+      {/* Tabla de Ventas con Paginación Controlada */}
       <SalesTable
         sales={sales}
         isLoading={isLoading}
         onViewDetails={handleViewDetails}
-        onCancelSale={handleCancelSale}
+        onCancelSale={handleOpenCancelModal}
         canCancel={canCancel}
+        pagination={{
+          currentPage,
+          pageSize,
+          totalItems: count,
+          onPageChange: (newPage) => setCurrentPage(newPage),
+          pageSizeOptions: [10, 20, 50],
+          onPageSizeChange: (newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          },
+        }}
       />
 
       {/* Modal para Crear Venta / Pedido */}
@@ -158,6 +192,15 @@ export default function SalesPage() {
       <SalesReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
+      />
+
+      {/* Modal de Confirmación de Anulación */}
+      <CancelSaleModal
+        isOpen={!!saleToCancel}
+        sale={saleToCancel}
+        onClose={() => setSaleToCancel(null)}
+        onConfirm={handleConfirmCancelSale}
+        isLoading={isCancelling}
       />
     </DashboardTemplate>
   );

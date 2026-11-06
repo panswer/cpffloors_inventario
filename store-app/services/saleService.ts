@@ -53,6 +53,8 @@ export interface SaleFilters {
   paymentMethod?: string;
   startDate?: string;
   endDate?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface SaleReportFilter {
@@ -97,13 +99,21 @@ export interface SaleReportResponse {
 
 export const salesApi = {
   // Listar ventas
-  async getSales(filters?: SaleFilters): Promise<{ sales: SaleRecord[]; count: number }> {
+  async getSales(filters?: SaleFilters): Promise<{
+    sales: SaleRecord[];
+    count: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const params = new URLSearchParams();
     if (filters?.search) params.append("search", filters.search);
     if (filters?.status) params.append("status", filters.status);
     if (filters?.paymentMethod) params.append("paymentMethod", filters.paymentMethod);
     if (filters?.startDate) params.append("startDate", filters.startDate);
     if (filters?.endDate) params.append("endDate", filters.endDate);
+    if (filters?.page) params.append("page", String(filters.page));
+    if (filters?.limit) params.append("limit", String(filters.limit));
 
     const query = params.toString() ? `?${params.toString()}` : "";
     const res = await fetch(`/api/sales${query}`, {
