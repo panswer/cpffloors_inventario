@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { DashboardTemplate } from "@/components/templates";
-import { ProductsTable, ProductFormModal } from "@/components/organisms";
+import { ProductsTable, ProductFormModal, ProductBulkUploadModal } from "@/components/organisms";
 import { Button, Input } from "@/components/atoms";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts } from "@/hooks/useProducts";
@@ -19,6 +19,7 @@ export default function ProductsPage() {
 
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
 
   // Hook conectado a API con React Query
@@ -31,6 +32,8 @@ export default function ProductsPage() {
     updateProduct,
     isUpdating,
     deleteProduct,
+    importBulk,
+    isImporting,
   } = useProducts({
     search: searchTerm,
     category: categoryFilter,
@@ -91,9 +94,14 @@ export default function ProductsPage() {
         </div>
 
         {canManage && (
-          <Button variant="primary" onClick={handleOpenCreate}>
-            + Nuevo Producto
-          </Button>
+          <div className="flex items-center gap-2.5">
+            <Button variant="secondary" onClick={() => setIsBulkModalOpen(true)}>
+              📄 Carga Masiva (CSV)
+            </Button>
+            <Button variant="primary" onClick={handleOpenCreate}>
+              + Nuevo Producto
+            </Button>
+          </div>
         )}
       </div>
 
@@ -151,6 +159,14 @@ export default function ProductsPage() {
         onSubmit={handleModalSubmit}
         productToEdit={selectedProduct}
         isLoading={isCreating || isUpdating}
+      />
+
+      {/* Modal de Carga Masiva (Hoja de cálculo CSV) */}
+      <ProductBulkUploadModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        onImport={(items, mode) => importBulk({ items, mode })}
+        isLoading={isImporting}
       />
     </DashboardTemplate>
   );

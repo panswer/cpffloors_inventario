@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { Product } from "@/models/Product";
 import { PRODUCT_CATEGORIES, ProductCategory } from "@/types/product";
 import { requireAuth } from "@/lib/authMiddleware";
+import { logger } from "@/lib/logger";
 import crypto from "crypto";
 
 // Mapa de prefijos SKU según la categoría
@@ -134,6 +135,22 @@ export async function POST(req: NextRequest) {
       imageUrl: imageUrl ? String(imageUrl).trim() : "",
       isActive: true,
     });
+
+    // Registrar log de evento de inventario (Entrada inicial de producto)
+    logger.info(`Entrada de inventario por nuevo producto: ${newProduct.name}`, {
+      eventType: "inventory_movement",
+      movementType: "in",
+      reason: "product_created",
+      productId: newProduct._id.toString(),
+      sku: newProduct.sku,
+      productName: newProduct.name,
+      category: newProduct.category,
+      quantity: newProduct.stock,
+      unit: newProduct.unit,
+      currentStock: newProduct.stock,
+      userId: auth.user!.userId,
+      username: auth.user!.username,
+    }, "inventory");
 
     return NextResponse.json(
       { message: "Producto registrado exitosamente", product: newProduct },

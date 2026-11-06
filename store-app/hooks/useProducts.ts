@@ -52,6 +52,15 @@ export function useProducts(filters?: ProductFilters) {
     },
   });
 
+  // Mutación: Carga masiva por hoja de cálculo
+  const bulkMutation = useMutation({
+    mutationFn: ({ items, mode }: { items: any[]; mode?: "add" | "set" }) =>
+      productsApi.importBulk(items, mode),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PRODUCT_KEYS.lists() });
+    },
+  });
+
   return {
     products: productsQuery.data?.products || [],
     count: productsQuery.data?.count || 0,
@@ -72,5 +81,9 @@ export function useProducts(filters?: ProductFilters) {
     deleteProduct: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
     deleteError: deleteMutation.error ? (deleteMutation.error as Error).message : null,
+
+    importBulk: bulkMutation.mutateAsync,
+    isImporting: bulkMutation.isPending,
+    importError: bulkMutation.error ? (bulkMutation.error as Error).message : null,
   };
 }

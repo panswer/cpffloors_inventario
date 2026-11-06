@@ -71,3 +71,30 @@ Content-Type: application/json
 DELETE {{host}}/api/products/{{productId}}
 Cookie: token={{token}}
 Content-Type: application/json
+
+### 8. Carga Masiva / Aumento de Stock por Hoja de Cálculo (Bulk Import)
+# mode: "add" (suma la cantidad al stock existente) o "set" (fija el stock exacto)
+# Si el producto existe (por SKU o nombre), actualiza stock; si no existe, lo crea en el catálogo.
+POST {{host}}/api/products/bulk
+Cookie: token={{token}}
+Content-Type: application/json
+
+{
+  "mode": "add",
+  "items": [
+    {
+      "sku": "VAS-PLAS-12",
+      "name": "Vaso Plástico Transparente 12oz",
+      "stock": 100,
+      "price": 4.50
+    },
+    {
+      "name": "Servilleta Dispensador Kraft",
+      "category": "Servilletas",
+      "stock": 500,
+      "price": 2.20,
+      "unit": "paquete"
+    }
+  ]
+}
+

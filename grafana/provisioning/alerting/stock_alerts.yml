@@ -1,0 +1,69 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: 'Alertas Inventario'
+    folder: 'Inventario'
+    interval: 1m
+    rules:
+      - uid: 'stock-critico-0-5'
+        title: 'Alerta de Stock Crítico (0 a 5 unidades)'
+        condition: 'C'
+        for: 0m
+        annotations:
+          summary: 'Stock crítico o agotado en producto: {{ $labels.product }}'
+          description: 'El producto "{{ $labels.product }}" tiene actualmente {{ $values.B.Value }} unidades restantes (rango de 0 a 5). Se requiere reabastecimiento.'
+        labels:
+          severity: 'warning'
+          category: 'inventario'
+        data:
+          - refId: 'A'
+            relativeTimeRange:
+              from: 86400
+              to: 0
+            datasourceUid: 'elasticsearch-logs'
+            model:
+              datasource:
+                type: 'elasticsearch'
+                uid: 'elasticsearch-logs'
+              query: 'context: "inventory"'
+              metrics:
+                - id: '1'
+                  type: 'max'
+                  field: 'meta.currentStock'
+              bucketAggs:
+                - id: '2'
+                  type: 'terms'
+                  field: 'meta.productName.keyword'
+                  settings:
+                    size: '100'
+                    order: 'desc'
+                    orderBy: '_count'
+                    min_doc_count: 1
+
+          # Reducción: Tomar el último valor por producto
+          - refId: 'B'
+            relativeTimeRange:
+              from: 86400
+              to: 0
+            datasourceUid: '__expr__'
+            model:
+              type: 'reduce'
+              reducer: 'last'
+              expression: 'A'
+              settings:
+                mode: 'dropNN'
+
+          # Condición de umbral: Se dispara cuando el stock está en el rango [0, 5] (menor o igual a 5)
+          - refId: 'C'
+            relativeTimeRange:
+              from: 86400
+              to: 0
+            datasourceUid: '__expr__'
+            model:
+              type: 'threshold'
+              expression: 'B'
+              conditions:
+                - evaluator:
+                    type: 'within_range'
+                    params: [0, 5]

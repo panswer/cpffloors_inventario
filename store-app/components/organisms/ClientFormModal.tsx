@@ -113,6 +113,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               id="modal-documentId"
               label="Documento / RIF / Cédula"
               required
+              disabled={!!clientToEdit}
               value={documentId}
               onChange={(e) => setDocumentId(e.target.value)}
               placeholder="ej. J-12345678-0"

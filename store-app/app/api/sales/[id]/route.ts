@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { Sale } from "@/models/Sale";
 import { Product } from "@/models/Product";
 import { requireAuth } from "@/lib/authMiddleware";
+import { logger } from "@/lib/logger";
 import mongoose from "mongoose";
 
 interface RouteParams {
@@ -70,9 +71,31 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
       // Reponer el stock de los productos que formaban parte de la venta
       for (const item of sale.items) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: item.quantity },
-        });
+        const prod = await Product.findById(item.productId);
+        if (prod) {
+          const prevStock = prod.stock;
+          prod.stock += item.quantity;
+          prod.increment();
+          await prod.save();
+
+          // Log de reingreso / entrada de inventario por anulación
+          logger.info(`Reingreso de inventario por venta anulada (${sale.saleNumber}): +${item.quantity} ${item.name}`, {
+            eventType: "inventory_movement",
+            movementType: "in",
+            reason: "sale_cancelled",
+            saleNumber: sale.saleNumber,
+            productId: prod._id.toString(),
+            sku: prod.sku,
+            productName: prod.name,
+            category: prod.category,
+            quantity: item.quantity,
+            unit: prod.unit,
+            previousStock: prevStock,
+            currentStock: prod.stock,
+            userId: auth.user!.userId,
+            username: auth.user!.username,
+          }, "inventory");
+        }
       }
 
       sale.status = "anulada";

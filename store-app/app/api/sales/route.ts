@@ -227,9 +227,28 @@ export async function POST(req: NextRequest) {
       });
 
       // Descontar inventario e incrementar versión de concurrencia
+      const prevStock = product.stock;
       product.stock -= qty;
       product.increment(); // fuerza incremento de __v en la actualización
       await product.save();
+
+      // Log de salida de inventario por venta
+      logger.info(`Salida de inventario por venta: ${qty}x ${product.name}`, {
+        eventType: "inventory_movement",
+        movementType: "out",
+        reason: "sale_dispatch",
+        productId: product._id.toString(),
+        sku: product.sku,
+        productName: product.name,
+        category: product.category,
+        quantity: qty,
+        unit: product.unit,
+        previousStock: prevStock,
+        currentStock: product.stock,
+        recipientName: finalRecipient,
+        userId: auth.user!.userId,
+        username: auth.user!.username,
+      }, "inventory");
     }
 
     // 3. Totales

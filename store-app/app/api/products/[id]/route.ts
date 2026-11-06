@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Product } from "@/models/Product";
 import { requireAuth } from "@/lib/authMiddleware";
+import { logger } from "@/lib/logger";
 import mongoose from "mongoose";
 
 interface RouteParams {
@@ -86,6 +87,8 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       product.sku = cleanSku;
     }
 
+    const previousStock = product.stock;
+
     if (body.name !== undefined) product.name = String(body.name).trim();
     if (body.description !== undefined) product.description = String(body.description).trim();
     if (body.category !== undefined) product.category = String(body.category).trim() as any;
@@ -101,6 +104,27 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     await product.save();
+
+    // Registrar log si hubo ajuste manual de stock (Entrada o Salida)
+    if (body.stock !== undefined && body.stock !== previousStock) {
+      const diff = product.stock - previousStock;
+      const movementType = diff > 0 ? "in" : "out";
+      logger.info(`Ajuste de inventario en "${product.name}": ${diff > 0 ? "+" : ""}${diff} ${product.unit}`, {
+        eventType: "inventory_movement",
+        movementType,
+        reason: "manual_adjustment",
+        productId: product._id.toString(),
+        sku: product.sku,
+        productName: product.name,
+        category: product.category,
+        quantity: Math.abs(diff),
+        unit: product.unit,
+        previousStock,
+        currentStock: product.stock,
+        userId: auth.user!.userId,
+        username: auth.user!.username,
+      }, "inventory");
+    }
 
     return NextResponse.json({
       message: "Producto actualizado correctamente",

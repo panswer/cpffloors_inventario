@@ -56,6 +56,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           rightElement={
             <button
               type="button"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               onClick={() => setShowPassword(!showPassword)}
               className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
             >

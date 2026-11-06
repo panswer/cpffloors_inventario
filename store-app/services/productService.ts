@@ -46,6 +46,28 @@ export interface ProductFilters {
   isActive?: boolean | string;
 }
 
+export interface BulkImportItem {
+  sku?: string;
+  name: string;
+  category?: string;
+  price?: number;
+  stock: number;
+  unit?: string;
+  description?: string;
+}
+
+export interface BulkImportResult {
+  message: string;
+  summary: {
+    total: number;
+    created: number;
+    updated: number;
+    failed: number;
+  };
+  errors: Array<{ row: number; item: string; error: string }>;
+  details: Array<{ action: "created" | "updated"; sku: string; name: string; quantity: number; currentStock: number }>;
+}
+
 export const productsApi = {
   // Listar productos
   async getProducts(filters?: ProductFilters): Promise<{ products: ProductItem[]; count: number }> {
@@ -117,6 +139,22 @@ export const productsApi = {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Error al dar de baja el producto");
+    return data;
+  },
+
+  // Carga masiva por hoja de cálculo (CSV)
+  async importBulk(
+    items: BulkImportItem[],
+    mode: "add" | "set" = "add"
+  ): Promise<BulkImportResult> {
+    const res = await fetch("/api/products/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items, mode }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error al procesar la carga masiva");
     return data;
   },
 };
