@@ -49,29 +49,60 @@ export const SalesReportModal: React.FC<SalesReportModalProps> = ({ isOpen, onCl
       "Destinatario",
       "Direccion Entrega",
       "Metodo Pago",
-      "Subtotal ($)",
-      "Total ($)",
-      "Items",
+      "SKU Producto",
+      "Producto",
+      "Cantidad",
+      "Unidad",
+      "Precio Unitario ($)",
+      "Subtotal Item ($)",
+      "Total Venta ($)",
     ];
 
-    const rows = data.sales.map((sale) => {
-      const itemsDetail = (sale.items || [])
-        .map((i) => `${i.quantity}x ${i.name} [${i.sku}]`)
-        .join(" | ");
+    const rows: string[][] = [];
 
-      return [
-        `"${sale.saleNumber}"`,
-        `"${new Date(sale.createdAt).toLocaleString()}"`,
-        `"${sale.status}"`,
-        `"${sale.clientId?.name || "N/A"}"`,
-        `"${sale.clientId?.documentId || "N/A"}"`,
-        `"${sale.recipientName.replace(/"/g, '""')}"`,
-        `"${sale.deliveryAddress.replace(/"/g, '""')}"`,
-        `"${sale.paymentMethod}"`,
-        sale.subtotal.toFixed(2),
-        sale.total.toFixed(2),
-        `"${itemsDetail.replace(/"/g, '""')}"`,
-      ];
+    data.sales.forEach((sale) => {
+      const items = sale.items && sale.items.length > 0 ? sale.items : [];
+
+      if (items.length === 0) {
+        // En caso excepcional de venta sin items registrados
+        rows.push([
+          `"${sale.saleNumber}"`,
+          `"${new Date(sale.createdAt).toLocaleString()}"`,
+          `"${sale.status}"`,
+          `"${sale.clientId?.name || "N/A"}"`,
+          `"${sale.clientId?.documentId || "N/A"}"`,
+          `"${sale.recipientName.replace(/"/g, '""')}"`,
+          `"${sale.deliveryAddress.replace(/"/g, '""')}"`,
+          `"${sale.paymentMethod}"`,
+          `""`,
+          `""`,
+          "0",
+          `""`,
+          "0.00",
+          "0.00",
+          sale.total.toFixed(2),
+        ]);
+      } else {
+        items.forEach((item) => {
+          rows.push([
+            `"${sale.saleNumber}"`,
+            `"${new Date(sale.createdAt).toLocaleString()}"`,
+            `"${sale.status}"`,
+            `"${sale.clientId?.name || "N/A"}"`,
+            `"${sale.clientId?.documentId || "N/A"}"`,
+            `"${sale.recipientName.replace(/"/g, '""')}"`,
+            `"${sale.deliveryAddress.replace(/"/g, '""')}"`,
+            `"${sale.paymentMethod}"`,
+            `"${item.sku}"`,
+            `"${item.name.replace(/"/g, '""')}"`,
+            String(item.quantity),
+            `"${item.unit || "unidad"}"`,
+            item.unitPrice.toFixed(2),
+            item.subtotal.toFixed(2),
+            sale.total.toFixed(2),
+          ]);
+        });
+      }
     });
 
     const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");

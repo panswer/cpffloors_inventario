@@ -110,6 +110,10 @@ export async function GET(req: NextRequest) {
 
 // POST /api/sales - Registrar una nueva venta y descontar stock con control de concurrencia (__v)
 export async function POST(req: NextRequest) {
+  let session: mongoose.ClientSession | null = null;
+  const mutatedProducts: Array<{ product: any; prevStock: number }> = [];
+  let createdClientDoc: any = null;
+
   try {
     const auth = requireAuth(req);
     if (!auth.authorized) return auth.response;
@@ -135,12 +139,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Intentar iniciar sesión de transacción (si MongoDB soporta ReplicaSet)
+    let useTransaction = false;
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+      useTransaction = true;
+    } catch {
+      // Si MongoDB corre como Standalone sin replica set, se gestionará rollback manual
+      session = null;
+      useTransaction = false;
+    }
+
     let clientDoc: any = null;
 
     // 1. Obtener o crear el cliente
     if (newClient) {
       const { documentId, name, phone, address } = newClient;
       if (!documentId || !name) {
+        if (useTransaction && session) await session.abortTransaction();
         return NextResponse.json(
           { error: "El documento/identificación y nombre son obligatorios para el nuevo cliente" },
           { status: 400 }
@@ -148,31 +165,41 @@ export async function POST(req: NextRequest) {
       }
 
       const cleanDoc = String(documentId).trim().toUpperCase();
-      let existing = await Client.findOne({ documentId: cleanDoc });
+      let existing = await Client.findOne({ documentId: cleanDoc }).session(session);
 
       if (existing) {
         clientDoc = existing;
       } else {
-        clientDoc = await Client.create({
-          documentId: cleanDoc,
-          name: String(name).trim(),
-          phone: phone ? String(phone).trim() : "",
-          address: address ? String(address).trim() : "",
-          isActive: true,
-        });
+        const created = await Client.create(
+          [
+            {
+              documentId: cleanDoc,
+              name: String(name).trim(),
+              phone: phone ? String(phone).trim() : "",
+              address: address ? String(address).trim() : "",
+              isActive: true,
+            },
+          ],
+          session ? { session } : {}
+        );
+        clientDoc = created[0];
+        createdClientDoc = clientDoc;
       }
     } else if (clientId) {
-      clientDoc = await Client.findById(clientId);
+      clientDoc = await Client.findById(clientId).session(session);
       if (!clientDoc) {
+        if (useTransaction && session) await session.abortTransaction();
         return NextResponse.json({ error: "Cliente seleccionado no encontrado" }, { status: 404 });
       }
       if (!clientDoc.isActive) {
+        if (useTransaction && session) await session.abortTransaction();
         return NextResponse.json(
           { error: "El cliente seleccionado se encuentra inactivo o dado de baja" },
           { status: 400 }
         );
       }
     } else {
+      if (useTransaction && session) await session.abortTransaction();
       return NextResponse.json(
         { error: "Debe seleccionar un cliente existente o proporcionar los datos para crearlo" },
         { status: 400 }
@@ -192,33 +219,21 @@ export async function POST(req: NextRequest) {
       const qty = Number(quantity);
 
       if (!productId || isNaN(qty) || qty <= 0) {
-        return NextResponse.json(
-          { error: "Cada ítem debe tener un producto válido y cantidad mayor a cero" },
-          { status: 400 }
-        );
+        throw new Error("Cada ítem debe tener un producto válido y cantidad mayor a cero");
       }
 
-      const product = await Product.findById(productId);
+      const product = await Product.findById(productId).session(session);
       if (!product) {
-        return NextResponse.json(
-          { error: `Producto con ID ${productId} no fue encontrado` },
-          { status: 404 }
-        );
+        throw new Error(`Producto con ID ${productId} no fue encontrado`);
       }
 
       if (!product.isActive) {
-        return NextResponse.json(
-          { error: `El producto "${product.name}" (${product.sku}) está inactivo` },
-          { status: 400 }
-        );
+        throw new Error(`El producto "${product.name}" (${product.sku}) está inactivo`);
       }
 
       if (product.stock < qty) {
-        return NextResponse.json(
-          {
-            error: `Stock insuficiente para "${product.name}". Solicitado: ${qty}, Disponible: ${product.stock}`,
-          },
-          { status: 400 }
+        throw new Error(
+          `Stock insuficiente para "${product.name}". Solicitado: ${qty}, Disponible: ${product.stock}`
         );
       }
 
@@ -239,7 +254,14 @@ export async function POST(req: NextRequest) {
       const prevStock = product.stock;
       product.stock -= qty;
       product.increment(); // fuerza incremento de __v en la actualización
-      await product.save();
+
+      if (session) {
+        await product.save({ session });
+      } else {
+        await product.save();
+        // Guardar para posible rollback compensatorio si no hay réplica
+        mutatedProducts.push({ product, prevStock });
+      }
 
       // Log de salida de inventario por venta
       logger.info(`Salida de inventario por venta: ${qty}x ${product.name}`, {
@@ -266,20 +288,32 @@ export async function POST(req: NextRequest) {
     const saleNumber = await generateSaleNumber();
 
     // 4. Crear venta
-    const newSale = await Sale.create({
-      saleNumber,
-      clientId: clientDoc._id,
-      recipientName: finalRecipient,
-      deliveryAddress: finalAddress,
-      items: processedItems,
-      subtotal: calculatedSubtotal,
-      tax,
-      total,
-      paymentMethod: paymentMethod || "efectivo",
-      status: "completada",
-      userId: new mongoose.Types.ObjectId(auth.user!.userId),
-      notes: notes ? String(notes).trim() : "",
-    });
+    const newSaleArray = await Sale.create(
+      [
+        {
+          saleNumber,
+          clientId: clientDoc._id,
+          recipientName: finalRecipient,
+          deliveryAddress: finalAddress,
+          items: processedItems,
+          subtotal: calculatedSubtotal,
+          tax,
+          total,
+          paymentMethod: paymentMethod || "efectivo",
+          status: "completada",
+          userId: new mongoose.Types.ObjectId(auth.user!.userId),
+          notes: notes ? String(notes).trim() : "",
+        },
+      ],
+      session ? { session } : {}
+    );
+
+    const newSale = newSaleArray[0];
+
+    // Confirmar transacción si estuvo activa
+    if (useTransaction && session) {
+      await session.commitTransaction();
+    }
 
     logger.info(`Venta registrada exitosamente: ${saleNumber}`, {
       saleNumber,
@@ -299,6 +333,34 @@ export async function POST(req: NextRequest) {
     );
   } catch (error: any) {
     console.error("Error en POST /api/sales:", error);
+
+    // Rollback nativo de transacción
+    if (session) {
+      try {
+        await session.abortTransaction();
+      } catch (abortErr) {
+        console.error("Error abortando transacción:", abortErr);
+      }
+    } else {
+      // Rollback compensatorio manual (en caso de no contar con réplica set)
+      for (const mutated of mutatedProducts) {
+        try {
+          await Product.findByIdAndUpdate(mutated.product._id, {
+            stock: mutated.prevStock,
+          });
+        } catch (rollbackErr) {
+          console.error(`Error en rollback de stock para ${mutated.product._id}:`, rollbackErr);
+        }
+      }
+      if (createdClientDoc) {
+        try {
+          await Client.findByIdAndDelete(createdClientDoc._id);
+        } catch (clientErr) {
+          console.error("Error eliminando cliente durante rollback:", clientErr);
+        }
+      }
+    }
+
     if (error.name === "VersionError") {
       return NextResponse.json(
         {
@@ -310,8 +372,12 @@ export async function POST(req: NextRequest) {
       );
     }
     return NextResponse.json(
-      { error: "Error al procesar la venta" },
-      { status: 500 }
+      { error: error.message || "Error al procesar la venta" },
+      { status: 400 }
     );
+  } finally {
+    if (session) {
+      session.endSession();
+    }
   }
 }

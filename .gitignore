@@ -12,6 +12,7 @@
 *.key
 *.cert
 *.crt
+mongo-keyfile*
 
 # ==========================================
 # Volúmenes y bases de datos locales
