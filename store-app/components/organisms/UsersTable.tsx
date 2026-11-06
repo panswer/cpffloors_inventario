@@ -56,11 +56,17 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     },
     {
       header: "Estado",
-      render: (u) => (
-        <Badge variant={u.isActive ? "success" : "danger"}>
-          {u.isActive ? "Activo" : "Inactivo / Baja"}
-        </Badge>
-      ),
+      render: (u) => {
+        const isLocked = u.lockUntil && new Date(u.lockUntil) > new Date();
+        if (isLocked) {
+          return <Badge variant="danger">Bloqueado (Intentos)</Badge>;
+        }
+        return (
+          <Badge variant={u.isActive ? "success" : "danger"}>
+            {u.isActive ? "Activo" : "Inactivo / Baja"}
+          </Badge>
+        );
+      },
     },
     {
       header: "Creado",

@@ -4,6 +4,8 @@ export interface UserItem {
   name?: string;
   role: "admin" | "manager" | "user";
   isActive: boolean;
+  loginAttempts?: number;
+  lockUntil?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +22,7 @@ export interface UpdateUserInput {
   role?: "admin" | "manager" | "user";
   password?: string;
   isActive?: boolean;
+  unlockAccount?: boolean;
 }
 
 export interface UserFilters {

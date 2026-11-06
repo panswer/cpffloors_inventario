@@ -55,7 +55,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     await connectDB();
     const body = await req.json();
-    const { name, role, password, isActive } = body;
+    const { name, role, password, isActive, unlockAccount } = body;
 
     const user = await User.findById(id);
     if (!user) {
@@ -84,6 +84,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       if (role !== undefined && ["admin", "manager", "user"].includes(role)) {
         user.role = role;
       }
+    }
+
+    // Desbloquear cuenta si se solicita
+    if (unlockAccount) {
+      user.loginAttempts = 0;
+      user.lockUntil = undefined;
     }
 
     // Estado activo/baja

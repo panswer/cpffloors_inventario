@@ -27,10 +27,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const [role, setRole] = useState<"admin" | "manager" | "user">("user");
   const [password, setPassword] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [unlockAccount, setUnlockAccount] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isAdmin = currentUserRole === "admin";
   const isManager = currentUserRole === "manager";
+  const isCurrentlyLocked = Boolean(userToEdit?.lockUntil && new Date(userToEdit.lockUntil) > new Date());
 
   useEffect(() => {
     if (userToEdit) {
@@ -39,6 +41,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setRole(userToEdit.role);
       setIsActive(userToEdit.isActive);
       setPassword("");
+      setUnlockAccount(false);
     } else {
       setUsername("");
       setName("");
@@ -46,6 +49,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setRole("user");
       setPassword("");
       setIsActive(true);
+      setUnlockAccount(false);
     }
     setError(null);
   }, [userToEdit, isOpen]);
@@ -85,6 +89,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     } else {
       // Editar
       const payload: UpdateUserInput = { name, isActive };
+      if (unlockAccount) {
+        payload.unlockAccount = true;
+      }
       // Solo el admin puede modificar roles
       if (isAdmin) {
         payload.role = role;
@@ -186,17 +193,34 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           />
 
           {userToEdit && (
-            <div className="flex items-center gap-2 pt-2">
-              <input
-                id="modal-active"
-                type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="modal-active" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Usuario Activo
-              </label>
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-2">
+                <input
+                  id="modal-active"
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                  className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="modal-active" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Usuario Activo
+                </label>
+              </div>
+
+              {isCurrentlyLocked && (
+                <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+                  <input
+                    id="modal-unlock"
+                    type="checkbox"
+                    checked={unlockAccount}
+                    onChange={(e) => setUnlockAccount(e.target.checked)}
+                    className="h-4 w-4 rounded border-zinc-300 text-amber-600 focus:ring-amber-500"
+                  />
+                  <label htmlFor="modal-unlock" className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                    Desbloquear cuenta (restablecer intentos de inicio de sesión)
+                  </label>
+                </div>
+              )}
             </div>
           )}
 

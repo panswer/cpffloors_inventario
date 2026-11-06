@@ -38,12 +38,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isValid = verifyPassword(password, user.passwordHash);
-    if (!isValid) {
-      logger.warn(`Intento de login fallido para usuario: ${cleanUsername}`, { username: cleanUsername }, "auth");
+    // Verificar si la cuenta se encuentra actualmente bloqueada por intentos fallidos
+    const now = new Date();
+    if (user.lockUntil && user.lockUntil > now) {
+      logger.warn(
+        `Intento de acceso a cuenta bloqueada: ${cleanUsername}`,
+        { username: cleanUsername, lockUntil: user.lockUntil },
+        "auth"
+      );
       return NextResponse.json(
-        { error: "Credenciales inválidas" },
-        { status: 401 }
+        {
+          error: "Tu cuenta ha sido bloqueada. Contacte al administrador.",
+        },
+        { status: 403 }
       );
     }
 
@@ -53,6 +60,57 @@ export async function POST(req: NextRequest) {
         { error: "Este usuario ha sido dado de baja. Contacte al administrador." },
         { status: 403 }
       );
+    }
+
+    const isValid = verifyPassword(password, user.passwordHash);
+    if (!isValid) {
+      // Incrementar contador de intentos fallidos
+      let currentAttempts = (user.loginAttempts || 0) + 1;
+      let lockUntil: Date | undefined = undefined;
+
+      // Si alcanzó o superó los 3 intentos fallidos, bloquear la cuenta
+      const MAX_ATTEMPTS = 3;
+      if (currentAttempts >= MAX_ATTEMPTS) {
+        lockUntil = new Date(Date.now() + 15 * 60 * 1000); // Bloqueo de 15 minutos
+        logger.warn(
+          `Usuario bloqueado tras 3 intentos fallidos: ${cleanUsername}`,
+          { username: cleanUsername, attempts: currentAttempts, lockUntil },
+          "auth"
+        );
+        user.loginAttempts = currentAttempts;
+        user.lockUntil = lockUntil;
+        await user.save();
+
+        return NextResponse.json(
+          {
+            error: "Tu cuenta ha sido bloqueada. Contacte al administrador.",
+          },
+          { status: 403 }
+        );
+      }
+
+      user.loginAttempts = currentAttempts;
+      await user.save();
+
+      logger.warn(
+        `Intento de login fallido para usuario: ${cleanUsername}. Intentos acumulados: ${currentAttempts}`,
+        { username: cleanUsername, currentAttempts },
+        "auth"
+      );
+
+      return NextResponse.json(
+        {
+          error: "Credenciales inválidas",
+        },
+        { status: 401 }
+      );
+    }
+
+    // Login exitoso: restablecer intentos fallidos y bloqueo
+    if ((user.loginAttempts && user.loginAttempts > 0) || user.lockUntil) {
+      user.loginAttempts = 0;
+      user.lockUntil = undefined;
+      await user.save();
     }
 
     const token = signToken({
