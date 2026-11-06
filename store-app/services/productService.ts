@@ -68,6 +68,29 @@ export interface BulkImportResult {
   details: Array<{ action: "created" | "updated"; sku: string; name: string; quantity: number; currentStock: number }>;
 }
 
+export interface ProductStockReportFilter {
+  category?: string;
+  isActive?: boolean | string;
+  stockFilter?: "all" | "low" | "out" | "available";
+}
+
+export interface ProductStockReportResponse {
+  products: ProductItem[];
+  summary: {
+    totalProducts: number;
+    totalStockUnits: number;
+    totalStockValue: number;
+    outOfStockCount: number;
+    lowStockCount: number;
+    categorySummary: Array<{
+      category: string;
+      productCount: number;
+      totalStock: number;
+      totalValue: number;
+    }>;
+  };
+}
+
 export const productsApi = {
   // Listar productos
   async getProducts(filters?: ProductFilters): Promise<{ products: ProductItem[]; count: number }> {
@@ -155,6 +178,28 @@ export const productsApi = {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Error al procesar la carga masiva");
+    return data;
+  },
+
+  // Obtener reporte de existencias / stock de productos
+  async getStockReport(filters?: ProductStockReportFilter): Promise<ProductStockReportResponse> {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append("category", filters.category);
+    if (filters?.isActive !== undefined && filters?.isActive !== "") {
+      params.append("isActive", String(filters.isActive));
+    }
+    if (filters?.stockFilter && filters.stockFilter !== "all") {
+      params.append("stockFilter", filters.stockFilter);
+    }
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const res = await fetch(`/api/products/reports${query}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error al obtener reporte de stock");
     return data;
   },
 };

@@ -6,6 +6,8 @@ import {
   ProductFilters,
   CreateProductInput,
   UpdateProductInput,
+  ProductStockReportFilter,
+  ProductStockReportResponse,
 } from "@/services/productService";
 
 export const PRODUCT_KEYS = {
@@ -14,6 +16,8 @@ export const PRODUCT_KEYS = {
   list: (filters?: ProductFilters) => [...PRODUCT_KEYS.lists(), filters] as const,
   details: () => [...PRODUCT_KEYS.all, "detail"] as const,
   detail: (id: string) => [...PRODUCT_KEYS.details(), id] as const,
+  reports: () => [...PRODUCT_KEYS.all, "report"] as const,
+  report: (filters?: any) => [...PRODUCT_KEYS.reports(), filters] as const,
 };
 
 export function useProducts(filters?: ProductFilters) {
@@ -86,4 +90,13 @@ export function useProducts(filters?: ProductFilters) {
     isImporting: bulkMutation.isPending,
     importError: bulkMutation.error ? (bulkMutation.error as Error).message : null,
   };
+}
+
+// Hook especializado para consultar el reporte de existencias / stock
+export function useProductStockReport(filters?: ProductStockReportFilter) {
+  return useQuery({
+    queryKey: PRODUCT_KEYS.report(filters),
+    queryFn: () => productsApi.getStockReport(filters),
+    staleTime: 1000 * 30, // 30 segundos
+  });
 }

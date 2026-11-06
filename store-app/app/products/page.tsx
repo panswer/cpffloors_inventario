@@ -3,7 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { DashboardTemplate } from "@/components/templates";
-import { ProductsTable, ProductFormModal, ProductBulkUploadModal } from "@/components/organisms";
+import {
+  ProductsTable,
+  ProductFormModal,
+  ProductBulkUploadModal,
+  ProductStockReportModal,
+} from "@/components/organisms";
 import { Button, Input } from "@/components/atoms";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts } from "@/hooks/useProducts";
@@ -20,6 +25,7 @@ export default function ProductsPage() {
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
 
   // Hook conectado a API con React Query
@@ -93,16 +99,21 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        {canManage && (
-          <div className="flex items-center gap-2.5">
-            <Button variant="secondary" onClick={() => setIsBulkModalOpen(true)}>
-              📄 Carga Masiva (CSV)
-            </Button>
-            <Button variant="primary" onClick={handleOpenCreate}>
-              + Nuevo Producto
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Button variant="outline" onClick={() => setIsReportModalOpen(true)}>
+            📊 Reporte de Stock
+          </Button>
+          {canManage && (
+            <>
+              <Button variant="secondary" onClick={() => setIsBulkModalOpen(true)}>
+                📄 Carga Masiva (CSV)
+              </Button>
+              <Button variant="primary" onClick={handleOpenCreate}>
+                + Nuevo Producto
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Barra de Filtros */}
@@ -167,6 +178,12 @@ export default function ProductsPage() {
         onClose={() => setIsBulkModalOpen(false)}
         onImport={(items, mode) => importBulk({ items, mode })}
         isLoading={isImporting}
+      />
+
+      {/* Modal de Reporte de Stock / Existencias */}
+      <ProductStockReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
       />
     </DashboardTemplate>
   );

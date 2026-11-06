@@ -124,6 +124,7 @@ Al iniciar el sistema por primera vez con la base de datos vacía:
    - Categorías admitidas: `Contenedores`, `Vasos`, `Cubiertos`, `Servilletas` y `Empaques`.
    - Generación automática de SKU según categoría (ej: `CON-XXXXXX`, `VAS-XXXXXX`).
    - Carga masiva de productos mediante archivo CSV (`/api/products/bulk`).
+   - **Reporte y Descarga de Stock (`ProductStockReportModal`)**: Consulta analítica de existencias con filtros por categoría, nivel de stock (disponibles, críticos o agotados), valorización monetaria total y exportación a archivo CSV.
    - Control de versiones y concurrencia optimista (`__v` de Mongoose): previene sobreescrituras accidentales entre usuarios simultáneos.
 2. **Clientes (`/clients`)**:
    - Directorio de clientes con documento/identificación fiscal único, teléfono, dirección y notas.

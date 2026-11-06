@@ -4,6 +4,7 @@ export * from "./UserFormModal";
 export * from "./UsersTable";
 export * from "./ProductFormModal";
 export * from "./ProductBulkUploadModal";
+export * from "./ProductStockReportModal";
 export * from "./ProductsTable";
 export * from "./ClientFormModal";
 export * from "./ClientsTable";
