@@ -123,6 +123,7 @@ export async function POST(req: NextRequest) {
       name: name?.trim() || "",
       role: assignedRole,
       isActive: true,
+      mustChangePassword: true, // Forzar cambio de contraseña en el primer inicio de sesión
     });
 
     const userObj = newUser.toObject();

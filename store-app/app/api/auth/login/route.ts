@@ -128,6 +128,7 @@ export async function POST(req: NextRequest) {
         username: user.username,
         name: user.name,
         role: user.role,
+        mustChangePassword: Boolean(user.mustChangePassword),
       },
     });
 

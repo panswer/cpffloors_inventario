@@ -91,6 +91,9 @@ Al iniciar el sistema por primera vez con la base de datos vacía:
 
 ## 🛡️ Seguridad de Autenticación y Bloqueo de Intentos
 
+- **Generación de Contraseñas y Primer Inicio de Sesión**:
+  - Al registrar un nuevo usuario desde el panel de administración, el sistema genera automáticamente una contraseña temporal aleatoria (que también puede ser modificada o re-generada en el acto).
+  - Al usuario se le asigna el flag de cambio obligatorio de contraseña (`mustChangePassword: true`). En su primer inicio de sesión, el sistema despliega automáticamente el modal `ChangePasswordModal` para exigirle definir su nueva clave antes de acceder a la plataforma.
 - **Límite de 3 Intentos Fallidos**: Si un usuario ingresa una contraseña incorrecta 3 veces consecutivas, su cuenta se bloquea automáticamente para prevenir ataques de fuerza bruta.
 - **Respuesta genérica y segura**: Durante los intentos fallidos previos, el sistema responde únicamente `Credenciales inválidas` sin revelar el conteo de intentos ni información interna.
 - **Notificación de bloqueo**: Una vez alcanzado el límite de intentos, el sistema responde informando que la cuenta ha sido bloqueada y solicita contactar a un administrador, sin exponer temporizadores ni ventanas de desbloqueo al usuario final.

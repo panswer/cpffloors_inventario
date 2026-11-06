@@ -121,5 +121,5 @@ Toda la interfaz de usuario se encuentra estructurada siguiendo [ATOMIC_DESIGN.m
 - **Moléculas**: `FormField`, `SelectField`, `DashboardCard`, `Table` (con paginación integrada).
 - **Organismos**:
   - Tablas: `UsersTable`, `ProductsTable`, `ClientsTable`, `SalesTable`.
-  - Modales: `UserFormModal`, `ProductFormModal`, `ProductBulkUploadModal`, `ClientFormModal`, `SaleFormModal`, `SaleDetailModal`, `CancelSaleModal`, `SalesReportModal`.
+  - Modales: `UserFormModal`, `ProductFormModal`, `ProductBulkUploadModal`, `ClientFormModal`, `SaleFormModal`, `SaleDetailModal`, `CancelSaleModal`, `SalesReportModal`, `ChangePasswordModal`.
 - **Templates**: `AuthTemplate`, `DashboardTemplate`.

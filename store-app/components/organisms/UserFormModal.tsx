@@ -34,6 +34,15 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const isManager = currentUserRole === "manager";
   const isCurrentlyLocked = Boolean(userToEdit?.lockUntil && new Date(userToEdit.lockUntil) > new Date());
 
+  const generateRandomPassword = () => {
+    const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%";
+    let pwd = "";
+    for (let i = 0; i < 10; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pwd;
+  };
+
   useEffect(() => {
     if (userToEdit) {
       setUsername(userToEdit.username);
@@ -47,7 +56,8 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setName("");
       // Si es manager, por defecto es "user"; si es admin, inicia en "user"
       setRole("user");
-      setPassword("");
+      // Generar contraseña aleatoria por defecto para nuevos usuarios
+      setPassword(generateRandomPassword());
       setIsActive(true);
       setUnlockAccount(false);
     }
@@ -182,15 +192,38 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             </div>
           )}
 
-          <FormField
-            id="modal-password"
-            label={userToEdit ? "Contraseña (dejar en blanco para conservar)" : "Contraseña"}
-            type="password"
-            required={!userToEdit}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-          />
+          <div>
+            <div className="flex items-center justify-between">
+              <label htmlFor="modal-password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                {userToEdit ? "Contraseña (dejar en blanco para conservar)" : "Contraseña Temporal"}
+              </label>
+              {!userToEdit && (
+                <button
+                  type="button"
+                  onClick={() => setPassword(generateRandomPassword())}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                >
+                  🎲 Generar otra clave
+                </button>
+              )}
+            </div>
+            <div className="mt-1">
+              <input
+                id="modal-password"
+                type="text"
+                required={!userToEdit}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="block w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2 font-mono text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+            {!userToEdit && (
+              <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                Esta es la clave temporal para el usuario. En su primer inicio de sesión, el sistema le solicitará cambiarla obligatoriamente.
+              </p>
+            )}
+          </div>
 
           {userToEdit && (
             <div className="space-y-3 pt-2">

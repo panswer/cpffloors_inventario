@@ -10,6 +10,7 @@ export interface AuthResponse {
     username: string;
     name?: string;
     role: "admin" | "user" | "manager";
+    mustChangePassword?: boolean;
   };
 }
 
@@ -55,5 +56,24 @@ export const authApi = {
     if (!res.ok) {
       throw new Error("Error al cerrar sesión");
     }
+  },
+
+  // Cambiar contraseña (primer inicio de sesión o actualización obligatoria)
+  async changePassword(input: {
+    currentPassword?: string;
+    newPassword: string;
+  }): Promise<{ message: string; user: AuthResponse["user"] }> {
+    const res = await fetch("/api/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Error al cambiar la contraseña");
+    }
+
+    return data;
   },
 };

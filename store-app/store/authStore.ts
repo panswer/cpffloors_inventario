@@ -5,6 +5,7 @@ export interface UserSession {
   username: string;
   name?: string;
   role: "admin" | "user" | "manager";
+  mustChangePassword?: boolean;
 }
 
 interface AuthState {

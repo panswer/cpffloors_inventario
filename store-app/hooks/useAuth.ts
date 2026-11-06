@@ -37,6 +37,21 @@ export function useAuth() {
     onSuccess: (data) => {
       setUser(data.user);
       queryClient.setQueryData(AUTH_KEYS.me, data.user);
+      // Si debe cambiar contraseña, no redirigir automáticamente para que se complete el cambio
+      if (!data.user.mustChangePassword) {
+        router.push("/");
+        router.refresh();
+      }
+    },
+  });
+
+  // Mutación para cambio de contraseña
+  const changePasswordMutation = useMutation({
+    mutationFn: (input: { currentPassword?: string; newPassword: string }) =>
+      authApi.changePassword(input),
+    onSuccess: (data) => {
+      setUser(data.user);
+      queryClient.setQueryData(AUTH_KEYS.me, data.user);
       router.push("/");
       router.refresh();
     },
@@ -62,5 +77,7 @@ export function useAuth() {
     loginError: loginMutation.error ? (loginMutation.error as Error).message : null,
     logout: logoutMutation.mutateAsync,
     isLoggingOut: logoutMutation.isPending,
+    changePassword: changePasswordMutation.mutateAsync,
+    isChangingPassword: changePasswordMutation.isPending,
   };
 }

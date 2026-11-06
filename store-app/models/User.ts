@@ -6,6 +6,7 @@ export interface IUser extends Document {
   name?: string;
   role: "admin" | "user" | "manager";
   isActive: boolean;
+  mustChangePassword?: boolean;
   loginAttempts: number;
   lockUntil?: Date;
   createdAt: Date;
@@ -37,6 +38,10 @@ const UserSchema = new Schema<IUser>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
     },
     loginAttempts: {
       type: Number,

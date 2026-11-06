@@ -100,6 +100,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (name !== undefined) user.name = name.trim();
     if (password && password.trim().length >= 6) {
       user.passwordHash = hashPassword(password);
+      if (body.mustChangePassword !== undefined) {
+        user.mustChangePassword = Boolean(body.mustChangePassword);
+      }
     }
 
     await user.save();
