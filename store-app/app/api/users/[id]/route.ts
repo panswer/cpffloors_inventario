@@ -99,6 +99,13 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     if (name !== undefined) user.name = name.trim();
     if (password && password.trim().length >= 6) {
+      // Regla de seguridad: Solamente el propio usuario puede cambiar su clave mediante esta ruta
+      if (auth.user?.userId !== id) {
+        return NextResponse.json(
+          { error: "No tienes permisos para modificar la contraseña de otro usuario. Cada usuario debe cambiar su propia clave." },
+          { status: 403 }
+        );
+      }
       user.passwordHash = hashPassword(password);
       if (body.mustChangePassword !== undefined) {
         user.mustChangePassword = Boolean(body.mustChangePassword);

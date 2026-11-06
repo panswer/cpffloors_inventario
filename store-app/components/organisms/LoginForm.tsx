@@ -102,7 +102,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         />
       </div>
 
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center text-sm">
         <div className="flex items-center">
           <input
             id="remember-me"
@@ -117,12 +117,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             Recordarme
           </label>
         </div>
-        <a
-          href="#"
-          className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
-        >
-          ¿Olvidaste tu contraseña?
-        </a>
       </div>
 
       <Button type="submit" isLoading={isLoading} className="w-full">

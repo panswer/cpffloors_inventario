@@ -150,6 +150,7 @@ export default function UsersPage() {
         userToEdit={selectedUser}
         isLoading={isCreating || isUpdating}
         currentUserRole={currentUser?.role}
+        currentUserId={currentUser?.id}
       />
     </DashboardTemplate>
   );

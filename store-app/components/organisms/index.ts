@@ -13,3 +13,4 @@ export * from "./SaleDetailModal";
 export * from "./SalesReportModal";
 export * from "./CancelSaleModal";
 export * from "./ChangePasswordModal";
+export * from "./ProfileModal";

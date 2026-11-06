@@ -27,4 +27,20 @@ describe("<Navbar /> Organism", () => {
 
     expect(handleLogout).toHaveBeenCalledTimes(1);
   });
+
+  it("debe invocar onOpenProfile al hacer clic en el perfil de usuario", () => {
+    const handleProfile = vi.fn();
+    render(
+      <Navbar
+        user={{ username: "admin", name: "Administrador", role: "admin" }}
+        onLogout={vi.fn()}
+        onOpenProfile={handleProfile}
+      />
+    );
+
+    const profileBtn = screen.getByTitle("Ver mi perfil");
+    fireEvent.click(profileBtn);
+
+    expect(handleProfile).toHaveBeenCalledTimes(1);
+  });
 });

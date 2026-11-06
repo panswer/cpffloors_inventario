@@ -8,12 +8,14 @@ interface NavbarProps {
     role: string;
   } | null;
   onLogout: () => void;
+  onOpenProfile?: () => void;
   isLoggingOut?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   user,
   onLogout,
+  onOpenProfile,
   isLoggingOut,
 }) => {
   return (
@@ -29,14 +31,24 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden text-right sm:block">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              {user?.name || user?.username || "Usuario"}
-            </p>
-            <p className="text-xs text-zinc-500 capitalize dark:text-zinc-400">
-              {user?.role || "user"}
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            className="flex items-center gap-2 rounded-lg p-1.5 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            title="Ver mi perfil"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 text-xs font-bold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
+              {(user?.name || user?.username || "U").charAt(0).toUpperCase()}
+            </div>
+            <div className="hidden text-left sm:block">
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {user?.name || user?.username || "Usuario"}
+              </p>
+              <p className="text-xs text-zinc-500 capitalize dark:text-zinc-400">
+                {user?.role || "user"}
+              </p>
+            </div>
+          </button>
 
           <Button
             variant="outline"

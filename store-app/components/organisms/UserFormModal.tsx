@@ -12,6 +12,7 @@ interface UserFormModalProps {
   userToEdit?: UserItem | null;
   isLoading?: boolean;
   currentUserRole?: string;
+  currentUserId?: string;
 }
 
 export const UserFormModal: React.FC<UserFormModalProps> = ({
@@ -21,6 +22,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   userToEdit,
   isLoading = false,
   currentUserRole = "user",
+  currentUserId,
 }) => {
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
@@ -33,6 +35,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const isAdmin = currentUserRole === "admin";
   const isManager = currentUserRole === "manager";
   const isCurrentlyLocked = Boolean(userToEdit?.lockUntil && new Date(userToEdit.lockUntil) > new Date());
+  // Solo se puede editar la clave si es un nuevo usuario o si el usuario editado es la misma persona autenticada
+  const isEditingSelf = Boolean(userToEdit && currentUserId && userToEdit._id === currentUserId);
+  const canEditPassword = !userToEdit || isEditingSelf;
 
   const generateRandomPassword = () => {
     const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%";
@@ -192,38 +197,44 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             </div>
           )}
 
-          <div>
-            <div className="flex items-center justify-between">
-              <label htmlFor="modal-password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {userToEdit ? "Contraseña (dejar en blanco para conservar)" : "Contraseña Temporal"}
-              </label>
+          {canEditPassword ? (
+            <div>
+              <div className="flex items-center justify-between">
+                <label htmlFor="modal-password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  {userToEdit ? "Nueva Contraseña (dejar en blanco para conservar)" : "Contraseña Temporal"}
+                </label>
+                {!userToEdit && (
+                  <button
+                    type="button"
+                    onClick={() => setPassword(generateRandomPassword())}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                  >
+                    🎲 Generar otra clave
+                  </button>
+                )}
+              </div>
+              <div className="mt-1">
+                <input
+                  id="modal-password"
+                  type={userToEdit ? "password" : "text"}
+                  required={!userToEdit}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="block w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2 font-mono text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
               {!userToEdit && (
-                <button
-                  type="button"
-                  onClick={() => setPassword(generateRandomPassword())}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400"
-                >
-                  🎲 Generar otra clave
-                </button>
+                <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                  Esta es la clave temporal para el usuario. En su primer inicio de sesión, el sistema le solicitará cambiarla obligatoriamente.
+                </p>
               )}
             </div>
-            <div className="mt-1">
-              <input
-                id="modal-password"
-                type="text"
-                required={!userToEdit}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="block w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2 font-mono text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              />
+          ) : (
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-800/40 dark:text-zinc-400">
+              🔒 Por seguridad, solo el propio usuario puede modificar su contraseña desde su perfil o en su inicio de sesión.
             </div>
-            {!userToEdit && (
-              <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                Esta es la clave temporal para el usuario. En su primer inicio de sesión, el sistema le solicitará cambiarla obligatoriamente.
-              </p>
-            )}
-          </div>
+          )}
 
           {userToEdit && (
             <div className="space-y-3 pt-2">
